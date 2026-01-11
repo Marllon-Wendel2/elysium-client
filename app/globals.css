@@ -1,16 +1,39 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ===============================
+   RESET BÁSICO (ESSENCIAL)
+   =============================== */
+
+* {
+  box-sizing: border-box;
 }
 
-@theme inline {
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* ===============================
+   VARIÁVEIS DE TEMA
+   =============================== */
+
+:root {
+  --background: #0b0b0b; /* fundo padrão do jogo */
+  --foreground: #ededed;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-mono: monospace;
 }
+
+/* ===============================
+   DARK MODE (OPCIONAL)
+   =============================== */
 
 @media (prefers-color-scheme: dark) {
   :root {
@@ -19,8 +42,76 @@
   }
 }
 
+/* ===============================
+   BODY
+   =============================== */
+
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  overflow: hidden; /* IMPORTANTE para jogos */
+}
+
+/* ===============================
+   CLASSES ÚTEIS PARA O JOGO
+   =============================== */
+
+/* Tela base do jogo */
+.game-screen {
+  width: 100vw;
+  height: 100vh;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background-color: #0b0b0b;
+}
+
+/* Board / Tabuleiro */
+.board {
+  position: relative;
+
+  width: 90vw;
+  max-width: 1400px;
+  aspect-ratio: 16 / 9;
+
+  border-radius: 16px;
+  overflow: hidden;
+
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7);
+}
+
+/* Imagem do board (next/image) */
+.board-image {
+  object-fit: cover; /* troque para contain se quiser */
+  object-position: center;
+}
+
+/* ===============================
+   CAMADAS DO JOGO (FUTURO)
+   =============================== */
+
+.board-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ui-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+}
+
+/* ===============================
+   MOBILE AJUSTES
+   =============================== */
+
+@media (max-width: 768px) {
+  .board {
+    width: 100vw;
+    border-radius: 0;
+  }
 }
