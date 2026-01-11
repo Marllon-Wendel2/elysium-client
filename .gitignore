@@ -13,6 +13,8 @@
 # testing
 /coverage
 
+Cards
+
 # next.js
 /.next/
 /out/
