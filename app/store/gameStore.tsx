@@ -4,15 +4,74 @@ const useGameStore = create<GameMatch>(() => ({
   phase: "PLAYING",
   currentTurn: "PLAYER",
 
-  board: {} as BoardState,
+  board: {
+    slots:[
+      {
+        lane: 1,
+        owner: 'PLAYER',
+        position: 'FRONT',
+        card: {
+          name: 'Menino gentil',
+          mana: 1,
+          energy: 1,
+          attack: 7,
+          life: 9,
+          art: '/Cards/good-boy.jpg',
+          class: 'cidadao'
+        },
+      },
+      {
+        lane: 2,
+        owner: 'PLAYER',
+        position: 'FRONT',
+        card: {
+          name: 'Menino gentil',
+          mana: 1,
+          energy: 1,
+          attack: 7,
+          life: 9,
+          art: '/Cards/good-boy.jpg',
+          class: 'cidadao'
+        },
+      },
+      {
+        lane: 3,
+        owner: 'PLAYER',
+        position: 'FRONT',
+        card: {
+          name: 'Menino gentil',
+          mana: 1,
+          energy: 1,
+          attack: 7,
+          life: 9,
+          art: '/Cards/good-boy.jpg',
+          class: 'cidadao'
+        },
+      },
+      {
+        lane: 1,
+        owner: 'CPU',
+        position: 'FRONT',
+        card: {
+          name: 'Menino gentil',
+          mana: 1,
+          energy: 1,
+          attack: 7,
+          life: 9,
+          art: '/Cards/good-boy.jpg',
+          class: 'cidadao'
+        },
+      }
+    ]
+  } as BoardState,
 
   player: {
-    life: 10000,
+    victoryPoints: 0,
     hand: [
       {
         name: 'Menino gentil',
-        turnInGame: 6,
-        damegeDead: 300,
+        mana: 1,
+        energy: 1,
         attack: 7,
         life: 9,
         art: '/Cards/good-boy.jpg',
@@ -20,22 +79,107 @@ const useGameStore = create<GameMatch>(() => ({
       },
       {
         name: 'Soldado iniciado',
-        turnInGame: 6,
-        damegeDead: 300,
+        mana: 4,
+        energy: 4,
+        attack: 20,
+        life: 25,
         art: '/Cards/arthur.jpg',
         class: 'exercito'
-      }
+      },
+            {
+        name: 'Soldado iniciado',
+        mana: 4,
+        energy: 4,
+        attack: 20,
+        life: 25,
+        art: '/Cards/arthur.jpg',
+        class: 'exercito'
+      },
+            {
+        name: 'Soldado iniciado',
+        mana: 4,
+        energy: 4,
+        attack: 20,
+        life: 25,
+        art: '/Cards/arthur.jpg',
+        class: 'exercito'
+      },
+            {
+        name: 'Soldado iniciado',
+        mana: 4,
+        energy: 4,
+        attack: 20,
+        life: 25,
+        art: '/Cards/arthur.jpg',
+        class: 'exercito'
+      },
+            {
+        name: 'Soldado iniciado',
+        mana: 4,
+        energy: 4,
+        attack: 20,
+        life: 25,
+        art: '/Cards/arthur.jpg',
+        class: 'exercito'
+      },
+            {
+        name: 'Soldado iniciado',
+        mana: 4,
+        energy: 4,
+        attack: 20,
+        life: 25,
+        art: '/Cards/arthur.jpg',
+        class: 'exercito'
+      },
+            {
+        name: 'Soldado iniciado',
+        mana: 4,
+        energy: 4,
+        attack: 20,
+        life: 25,
+        art: '/Cards/arthur.jpg',
+        class: 'exercito'
+      },
+            {
+        name: 'Soldado iniciado',
+        mana: 4,
+        energy: 4,
+        attack: 20,
+        life: 25,
+        art: '/Cards/arthur.jpg',
+        class: 'exercito'
+      },
+            {
+        name: 'Soldado iniciado',
+        mana: 4,
+        energy: 4,
+        attack: 20,
+        life: 25,
+        art: '/Cards/arthur.jpg',
+        class: 'exercito'
+      },
+            {
+        name: 'Soldado iniciado',
+        mana: 4,
+        energy: 4,
+        attack: 20,
+        life: 25,
+        art: '/Cards/arthur.jpg',
+        class: 'exercito'
+      },
+      
     ],
-    deck: 5
+    deck: 5,
   } as PlayerState,
   cpu: {
-    life: 10000,
+    victoryPoints: 0,
     hand: 4,
     deck: 20
   } as PlayerState,
 
   turn: 1,
-  winner: 'NONE'
+  winner: 'NONE',
+  showInfos: false
 }));
 
 export default useGameStore;

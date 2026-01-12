@@ -11,6 +11,7 @@ export{}
 
         turn: number,
         winner: "PLAYER" | "CPU" | 'NONE' | "DRAW"
+        showInfos: boolean,
     }
 
     interface BoardState {
@@ -18,26 +19,33 @@ export{}
     }
 
     interface BoardSlot {
-        id: number
-        owner: "PLAYER" | "CPU" | null
+        lane: 1 | 2 | 3 
+        position: Position
+        owner: "PLAYER" | "CPU" 
         card?: Card
     }
+
+    type Position = "FRONT" | "BACK"
 
     interface PlayerState {
         life: number,
         hand: Card[] | number,
         deck: number,
+        victoryPoints: number,
     }
 
     interface Card {
         id?: string,
         name: string,
-        turnInGame: number,
-        damegeDead: number,
+        mana: number,
+        energy: number,
+        energyUsend: number,
         class: string,
         attack: number,
         life: number,
         art: string,
+        canAttack: boolean,
+        canEvolve: boolean,
         effect: CardEffect
     }
 
