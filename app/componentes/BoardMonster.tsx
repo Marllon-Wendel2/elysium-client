@@ -29,12 +29,16 @@ function BoardSlot({
   isEnemy,
   onClick,
   isTarget,
+  isAttackMode,
+  isAttacker,
 }: {
   id: string
   slot: any
   isEnemy: boolean
   onClick: (card: any) => void
   isTarget: boolean
+  isAttackMode: boolean
+  isAttacker: boolean
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id,
@@ -44,6 +48,8 @@ function BoardSlot({
   const borderColor = isEnemy
     ? "border-neutral-400"
     : CARD_BORDER_BY_CLASS[slot?.card?.class ?? ""] ?? "border-neutral-400"
+
+  const isDimmed = isAttackMode && slot?.card && !isTarget && !isAttacker
 
   return (
     <div
@@ -56,6 +62,7 @@ function BoardSlot({
         bg-black/20 flex items-center justify-center
         transition-colors
         ${isTarget ? "border-red-500 bg-red-500/20 cursor-crosshair animate-pulse" : isOver ? "bg-green-500/30 border-green-400" : borderColor}
+        ${isDimmed ? "opacity-50" : ""}
         ${slot?.card ? "cursor-pointer hover:brightness-110" : ""}
       `}
     >
@@ -82,6 +89,7 @@ export default function BoardMonster({ owner, position, attackingSlot, setAttack
     .sort((a, b) => a.lane - b.lane)
 
   const isEnemy = owner === "CPU"
+  const isAttackMode = !!attackingSlot
 
   // Lógica para verificar se um slot é um alvo válido
   const checkIsTarget = (targetSlot: any) => {
@@ -114,6 +122,10 @@ export default function BoardMonster({ owner, position, attackingSlot, setAttack
         const slot = slots.find((s) => s.lane === lane)
         const slotId = `${owner}-${position}-${lane}`
         const isTarget = checkIsTarget(slot)
+        const isAttacker = attackingSlot && slot && 
+          attackingSlot.owner === slot.owner && 
+          attackingSlot.position === slot.position && 
+          attackingSlot.lane === slot.lane
 
         return (
           <BoardSlot
@@ -122,14 +134,16 @@ export default function BoardMonster({ owner, position, attackingSlot, setAttack
             slot={slot}
             isEnemy={isEnemy}
             isTarget={isTarget}
+            isAttackMode={isAttackMode}
+            isAttacker={!!isAttacker}
             onClick={(clickedSlot) => {
-              if (isTarget) {
-                console.log(`⚔️ ${attackingSlot.card.name} atacou ${clickedSlot.card.name}!`)
-                setAttackingSlot?.(null) // Reseta o ataque após o clique
+              if (attackingSlot) {
+                if (isTarget) {
+                  console.log(`⚔️ ${attackingSlot.card.name} atacou ${clickedSlot.card.name}!`)
+                }
+                setAttackingSlot?.(null)
               } else if (clickedSlot.card) {
-                // Se não for alvo, abre detalhes (se tiver carta)
                 setSelectedSlot(clickedSlot)
-                setAttackingSlot?.(null) // Cancela ataque anterior se clicar em outra carta
               }
             }}
           />

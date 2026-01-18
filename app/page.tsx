@@ -43,7 +43,12 @@ export default function Home() {
 
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-    <main className="w-screen h-screen bg-neutral-950 grid grid-rows-[auto_1fr_auto]">
+    <main 
+      className="w-screen h-screen bg-neutral-950 grid grid-rows-[auto_1fr_auto]"
+      onClick={() => {
+        if (attackingSlot) setAttackingSlot(null)
+      }}
+    >
 
       {/* 🔴 TOPO — INIMIGO */}
       <section className="grid grid-cols-[auto_1fr_auto] items-center px-6 pt-4">
