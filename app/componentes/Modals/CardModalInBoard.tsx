@@ -9,6 +9,7 @@ interface CardModalInBoardProps {
   onAttack?: (card: Card) => void
   onActivateEffect?: (card: Card) => void
   onDiscard?: (card: Card) => void
+  isEnemy?: boolean
 }
 
 export default function CardDetailsInBoard({
@@ -18,6 +19,7 @@ export default function CardDetailsInBoard({
   onAttack,
   onActivateEffect,
   onDiscard,
+  isEnemy,
 }: CardModalInBoardProps) {
   if (!isOpen || !card) return null
 
@@ -30,8 +32,33 @@ export default function CardDetailsInBoard({
         onClick={onClose}
       />
 
+      <div className="relative z-10 flex gap-4 items-start max-h-[90vh]">
+        {/* Lista de Append (Esquerda) */}
+        {(card as any).apend && (card as any).apend.length > 0 && (
+          <div className="w-56 flex flex-col gap-2 overflow-y-auto max-h-full py-2">
+            {(card as any).apend.map((item: any, idx: number) => (
+              <div key={idx} className="flex gap-3 bg-neutral-900/90 border border-neutral-700 p-2 rounded-lg items-center shadow-lg backdrop-blur-sm">
+                <div className="relative w-10 h-14 shrink-0 rounded overflow-hidden border border-neutral-600">
+                  <Image 
+                    src={item.art} 
+                    alt={item.name} 
+                    fill 
+                    className="object-cover" 
+                  />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs font-bold text-white truncate">{item.name}</span>
+                  <span className="text-[10px] text-neutral-400 truncate">
+                    {item.effect?.type} {item.effect?.value && `(${item.effect.value})`}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
       {/* Modal */}
-      <div className="relative z-10 w-105 max-w-[95%] rounded-2xl bg-neutral-900 border border-neutral-700 shadow-2xl p-5">
+      <div className="w-105 max-w-[95vw] rounded-2xl bg-neutral-900 border border-neutral-700 shadow-2xl p-5 overflow-y-auto max-h-full">
 
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
@@ -94,6 +121,7 @@ export default function CardDetailsInBoard({
         )}
 
         {/* AÇÕES */}
+        {!isEnemy && (
         <div className="flex gap-3">
           <button
             onClick={() => onAttack?.(card)}
@@ -134,6 +162,8 @@ export default function CardDetailsInBoard({
             Descartar
           </button>
         </div>
+        )}
+      </div>
       </div>
     </div>
   )

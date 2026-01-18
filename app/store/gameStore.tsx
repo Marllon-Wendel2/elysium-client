@@ -63,6 +63,34 @@ const useGameStore = create<GameMatch>(() => ({
           art: '/Cards/good-boy.jpg',
           class: 'cidadao'
         },
+      },
+      {
+        lane: 2,
+        owner: 'PLAYER',
+        position: 'FRONT',
+        card: {
+        name: 'Soldado iniciado',
+        mana: 4,
+        energy: 4,
+        attack: 20,
+        life: 25,
+        art: '/Cards/arthur.jpg',
+        class: 'exercito',
+        apend: [
+          {
+            name: 'Espada Divina',
+            mana: 0,
+            energy: 4,
+            art: '/Cards/divine-sword.jpg',
+            class: 'equipment',
+            effect: {
+              type: "BUFF",
+              value: 2
+            }
+          }
+        ],
+        range: 1
+      },
       }
     ]
   } as BoardState,
@@ -124,7 +152,7 @@ const useGameStore = create<GameMatch>(() => ({
         art: '/Cards/arthur.jpg',
         class: 'exercito'
       },
-            {
+      {
         name: 'Soldado iniciado',
         mana: 4,
         energy: 4,
@@ -133,41 +161,16 @@ const useGameStore = create<GameMatch>(() => ({
         art: '/Cards/arthur.jpg',
         class: 'exercito'
       },
-            {
-        name: 'Soldado iniciado',
-        mana: 4,
+      {
+        name: 'Espada Divina',
+        mana: 0,
         energy: 4,
-        attack: 20,
-        life: 25,
-        art: '/Cards/arthur.jpg',
-        class: 'exercito'
-      },
-            {
-        name: 'Soldado iniciado',
-        mana: 4,
-        energy: 4,
-        attack: 20,
-        life: 25,
-        art: '/Cards/arthur.jpg',
-        class: 'exercito'
-      },
-            {
-        name: 'Soldado iniciado',
-        mana: 4,
-        energy: 4,
-        attack: 20,
-        life: 25,
-        art: '/Cards/arthur.jpg',
-        class: 'exercito'
-      },
-            {
-        name: 'Soldado iniciado',
-        mana: 4,
-        energy: 4,
-        attack: 20,
-        life: 25,
-        art: '/Cards/arthur.jpg',
-        class: 'exercito'
+        art: '/Cards/divine-sword.jpg',
+        class: 'equipment',
+        effect: {
+          type: "BUFF",
+          value: 2
+        }
       },
       
     ],

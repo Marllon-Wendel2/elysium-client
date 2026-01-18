@@ -29,7 +29,7 @@ export default function Card({
   onSelect,
 }: CardProps) {
   const manaAvailable = useGameStore((state) => state.player.manaAvailable)
-  const cardAvaible = manaAvailable >= (card.mana ?? 0)
+  const cardAvaible = manaAvailable >= (card.mana ?? 0) || card.class !== 'magic' && card.class !== 'equipment'
 
   const {
     attributes,

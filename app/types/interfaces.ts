@@ -50,7 +50,8 @@ export{}
         range: number,
         canAttack: boolean,
         canEvolve: boolean,
-        effect: CardEffect
+        effect?: CardEffect
+        apend: Card[]
     }
 
     interface CardEffect {

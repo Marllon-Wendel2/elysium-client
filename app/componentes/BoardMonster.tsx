@@ -58,7 +58,7 @@ function BoardSlot({
       style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}
       className={`
         relative border-2
-        rounded-lg shadow-lg overflow-hidden
+        rounded-lg shadow-lg
         bg-black/20 flex items-center justify-center
         transition-colors
         ${isTarget ? "border-red-500 bg-red-500/20 cursor-crosshair animate-pulse" : isOver ? "bg-green-500/30 border-green-400" : borderColor}
@@ -67,12 +67,32 @@ function BoardSlot({
       `}
     >
       {slot?.card ? (
-        <Image
-          src={slot.card.art}
-          alt={slot.card.name}
-          fill
-          className={`object-cover transform-gpu ${isEnemy ? "rotate-180" : ""}`}
-        />
+        <>
+          {slot.card.apend?.map((appendCard: any, index: number) => (
+            <div
+              key={index}
+              className="absolute w-full h-full rounded-lg overflow-hidden border border-neutral-600 bg-neutral-900 shadow-sm"
+              style={{
+                top: (index + 1) * 15,
+              }}
+            >
+              <Image
+                src={appendCard.art}
+                alt={appendCard.name}
+                fill
+                className={`object-cover transform-gpu ${isEnemy ? "rotate-180" : ""}`}
+              />
+            </div>
+          ))}
+          <div className="absolute inset-0 z-10 rounded-lg overflow-hidden">
+            <Image
+              src={slot.card.art}
+              alt={slot.card.name}
+              fill
+              className={`object-cover transform-gpu ${isEnemy ? "rotate-180" : ""}`}
+            />
+          </div>
+        </>
       ) : (
         <span className="text-gray-500 text-xs">Vazio</span>
       )}
@@ -155,6 +175,7 @@ export default function BoardMonster({ owner, position, attackingSlot, setAttack
       card={selectedSlot?.card}
       isOpen={!!selectedSlot}
       onClose={() => setSelectedSlot(null)}
+      isEnemy={isEnemy}
       onAttack={(card) => {
         console.log("⚔️ Preparando ataque com:", card.name)
         // Define o slot atual como atacante
