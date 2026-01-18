@@ -47,6 +47,7 @@ export{}
         attack: number,
         life: number,
         art: string,
+        range: number,
         canAttack: boolean,
         canEvolve: boolean,
         effect: CardEffect
