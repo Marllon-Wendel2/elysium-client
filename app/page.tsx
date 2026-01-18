@@ -13,6 +13,7 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
+import { useState } from "react"
 
 export default function Home() {
   const deckPlayer = useGameStore((state) => state.player.deck)
@@ -21,6 +22,7 @@ export default function Home() {
   const manaAvailableCpu = useGameStore((state) => state.cpu.manaAvailable)
   const playerVP = useGameStore((state) => state.player.victoryPoints)
   const enemyVP = useGameStore((state) => state.cpu.victoryPoints)
+  const [attackingSlot, setAttackingSlot] = useState<any | null>(null)
 
     const sensors = useSensors(
       useSensor(PointerSensor, {
@@ -121,13 +123,33 @@ export default function Home() {
 
         {/* Container das 4 linhas */}
         <div className="absolute inset-0 flex flex-col justify-between py-10">
-          <BoardMonster owner="CPU" position="BACK" />
+          <BoardMonster 
+            owner="CPU" 
+            position="BACK" 
+            attackingSlot={attackingSlot} 
+            setAttackingSlot={setAttackingSlot}
+          />
 
-          <BoardMonster owner="CPU" position="FRONT" />
+          <BoardMonster 
+            owner="CPU" 
+            position="FRONT" 
+            attackingSlot={attackingSlot} 
+            setAttackingSlot={setAttackingSlot}
+          />
 
-          <BoardMonster owner="PLAYER" position="FRONT" />
+          <BoardMonster 
+            owner="PLAYER" 
+            position="FRONT" 
+            attackingSlot={attackingSlot} 
+            setAttackingSlot={setAttackingSlot}
+          />
 
-          <BoardMonster owner="PLAYER" position="BACK" />
+          <BoardMonster 
+            owner="PLAYER" 
+            position="BACK" 
+            attackingSlot={attackingSlot} 
+            setAttackingSlot={setAttackingSlot}
+          />
         </div>
       </div>
     </section>

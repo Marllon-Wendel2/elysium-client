@@ -19,6 +19,36 @@ const useGameStore = create<GameMatch>(() => ({
           art: '/Cards/good-boy.jpg',
           class: 'cidadao'
         },
+
+      },
+      {
+        lane: 1,
+        owner: 'CPU',
+        position: 'BACK',
+        card: {
+          name: 'Menino gentil',
+          mana: 1,
+          energy: 1,
+          attack: 7,
+          life: 9,
+          art: '/Cards/good-boy.jpg',
+          class: 'cidadao'
+        },
+      },
+      {
+        lane: 1,
+        owner: 'PLAYER',
+        position: 'BACK',
+        card: {
+          name: 'Menino gentil',
+          mana: 1,
+          energy: 1,
+          attack: 7,
+          life: 9,
+          range: 1,
+          art: '/Cards/good-boy.jpg',
+          class: 'cidadao'
+        },
       },
       {
         lane: 1,
@@ -76,7 +106,7 @@ const useGameStore = create<GameMatch>(() => ({
         art: '/Cards/arthur.jpg',
         class: 'exercito'
       },
-            {
+      {
         name: 'Soldado iniciado',
         mana: 4,
         energy: 4,

@@ -9,6 +9,8 @@ import CardDetailsInBoard from "./Modals/CardModalInBoard"
 interface BoardMonsterProps {
   owner: "PLAYER" | "CPU"
   position: Position
+  attackingSlot?: any
+  setAttackingSlot?: (slot: any) => void
 }
 
 const CARD_WIDTH = 96
@@ -26,11 +28,13 @@ function BoardSlot({
   slot,
   isEnemy,
   onClick,
+  isTarget,
 }: {
   id: string
   slot: any
   isEnemy: boolean
   onClick: (card: any) => void
+  isTarget: boolean
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id,
@@ -44,14 +48,14 @@ function BoardSlot({
   return (
     <div
       ref={setNodeRef}
-      onClick={() => slot?.card && onClick(slot.card)}
+      onClick={() => slot && onClick(slot)}
       style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}
       className={`
         relative border-2
         rounded-lg shadow-lg overflow-hidden
         bg-black/20 flex items-center justify-center
         transition-colors
-        ${isOver ? "bg-green-500/30 border-green-400" : borderColor}
+        ${isTarget ? "border-red-500 bg-red-500/20 cursor-crosshair animate-pulse" : isOver ? "bg-green-500/30 border-green-400" : borderColor}
         ${slot?.card ? "cursor-pointer hover:brightness-110" : ""}
       `}
     >
@@ -69,8 +73,8 @@ function BoardSlot({
   )
 }
 
-export default function BoardMonster({ owner, position }: BoardMonsterProps) {
-  const [selectedCard, setSelectedCard] = useState<Card | null>(null)
+export default function BoardMonster({ owner, position, attackingSlot, setAttackingSlot }: BoardMonsterProps) {
+  const [selectedSlot, setSelectedSlot] = useState<any | null>(null)
   const allSlots = useGameStore((state) => state.board.slots)
 
   const slots = allSlots
@@ -79,12 +83,37 @@ export default function BoardMonster({ owner, position }: BoardMonsterProps) {
 
   const isEnemy = owner === "CPU"
 
+  // Lógica para verificar se um slot é um alvo válido
+  const checkIsTarget = (targetSlot: any) => {
+    if (!attackingSlot) return false
+    if (!targetSlot?.card) return false // Só pode atacar slots com cartas
+    if (targetSlot.owner === attackingSlot.owner) return false // Não pode atacar aliados
+
+    const range = (attackingSlot.card as any).range ?? 1 // Assume range 1 se não definido
+    const attackerPos = attackingSlot.position
+    const targetPos = targetSlot.position
+
+    if (range === 1) {
+      // Range 1: Se estiver atrás, não ataca ninguém.
+      if (attackerPos === 'BACK') return false
+      // Se estiver na frente, ataca apenas a frente inimiga.
+      if (attackerPos === 'FRONT') {
+         return targetPos === 'FRONT'
+      }
+    } else if (range >= 2) {
+      // Range 2+: Ataca qualquer posição inimiga
+       return true
+    }
+    return false
+  }
+
   return (
     <>
     <div className="flex justify-center gap-4">
       {[1, 2, 3].map((lane) => {
         const slot = slots.find((s) => s.lane === lane)
         const slotId = `${owner}-${position}-${lane}`
+        const isTarget = checkIsTarget(slot)
 
         return (
           <BoardSlot
@@ -92,27 +121,41 @@ export default function BoardMonster({ owner, position }: BoardMonsterProps) {
             id={slotId}
             slot={slot}
             isEnemy={isEnemy}
-            onClick={setSelectedCard}
+            isTarget={isTarget}
+            onClick={(clickedSlot) => {
+              if (isTarget) {
+                console.log(`⚔️ ${attackingSlot.card.name} atacou ${clickedSlot.card.name}!`)
+                setAttackingSlot?.(null) // Reseta o ataque após o clique
+              } else if (clickedSlot.card) {
+                // Se não for alvo, abre detalhes (se tiver carta)
+                setSelectedSlot(clickedSlot)
+                setAttackingSlot?.(null) // Cancela ataque anterior se clicar em outra carta
+              }
+            }}
           />
         )
       })}
     </div>
 
     <CardDetailsInBoard
-      card={selectedCard}
-      isOpen={!!selectedCard}
-      onClose={() => setSelectedCard(null)}
+      card={selectedSlot?.card}
+      isOpen={!!selectedSlot}
+      onClose={() => setSelectedSlot(null)}
       onAttack={(card) => {
-        console.log("⚔️ Atacar com:", card.name)
-        setSelectedCard(null)
+        console.log("⚔️ Preparando ataque com:", card.name)
+        // Define o slot atual como atacante
+        if (selectedSlot && setAttackingSlot) {
+          setAttackingSlot(selectedSlot)
+        }
+        setSelectedSlot(null)
       }}
       onActivateEffect={(card) => {
         console.log("✨ Ativar efeito de:", card.name)
-        setSelectedCard(null)
+        setSelectedSlot(null)
       }}
       onDiscard={(card) => {
         console.log("🗑️ Descartar:", card.name)
-        setSelectedCard(null)
+        setSelectedSlot(null)
       }}
     />
     </>
