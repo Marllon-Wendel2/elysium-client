@@ -29,7 +29,7 @@ export default function CardModal({
       />
 
       {/* Modal */}
-      <div className="relative z-10 w-[420px] max-w-[95%] rounded-2xl bg-neutral-900 border border-neutral-700 shadow-2xl p-5">
+      <div className="relative z-10 w-105 max-w-[95%] rounded-2xl bg-neutral-900 border border-neutral-700 shadow-2xl p-5">
 
         {/* Header */}
         <div className="flex justify-between items-center mb-4">

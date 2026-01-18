@@ -19,7 +19,7 @@ export{}
     }
 
     interface BoardSlot {
-        lane: 1 | 2 | 3 
+        lane: 0 | 1 | 2 
         position: Position
         owner: "PLAYER" | "CPU" 
         card?: Card

@@ -6,6 +6,14 @@ import PlayerHand from "./componentes/PlayerHand"
 import useGameStore from "./store/gameStore"
 import BoardMonster from "./componentes/BoardMonster"
 
+import {
+  DndContext,
+  DragEndEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+
 export default function Home() {
   const deckPlayer = useGameStore((state) => state.player.deck)
   const deckEnemy = useGameStore((state) => state.cpu.deck)
@@ -13,7 +21,25 @@ export default function Home() {
   const playerVP = useGameStore((state) => state.player.victoryPoints)
   const enemyVP = useGameStore((state) => state.cpu.victoryPoints)
 
+    const sensors = useSensors(
+      useSensor(PointerSensor, {
+        activationConstraint: { distance: 8 },
+      })
+    )
+    function handleDragEnd(event: DragEndEvent) {
+      const { active, over } = event
+  
+      if (!over) {
+        console.log('❌ Drop fora de slot')
+        return
+      }
+  
+      console.log('✅ Carta:', active.id)
+      console.log('🎯 Slot:', over.id)
+    }
+
   return (
+    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
     <main className="w-screen h-screen bg-neutral-950 grid grid-rows-[auto_1fr_auto]">
 
       {/* 🔴 TOPO — INIMIGO */}
@@ -58,31 +84,27 @@ export default function Home() {
 
       {/* 🟢 CENTRO — BOARD */}
       <section className="flex items-center justify-center flex-1">
-  <div className="relative h-[90%] aspect-2/3 max-w-full">
-    <Image
-      src="/Cards/board-bg.jpg"
-      alt="Tabuleiro"
-      fill
-      priority
-      className="object-cover rounded-lg"
-    />
+      <div className="relative h-[90%] aspect-2/3 max-w-full">
+        <Image
+          src="/Cards/bord.jpg"
+          alt="Tabuleiro"
+          fill
+          priority
+          className="object-cover rounded-lg"
+        />
 
-    {/* Container das 4 linhas */}
-    <div className="absolute inset-0 flex flex-col justify-between py-10">
-      {/* 1) CPU BACK */}
-      <BoardMonster owner="CPU" position="BACK" />
+        {/* Container das 4 linhas */}
+        <div className="absolute inset-0 flex flex-col justify-between py-10">
+          <BoardMonster owner="CPU" position="BACK" />
 
-      {/* 2) CPU FRONT */}
-      <BoardMonster owner="CPU" position="FRONT" />
+          <BoardMonster owner="CPU" position="FRONT" />
 
-      {/* 3) PLAYER FRONT */}
-      <BoardMonster owner="PLAYER" position="FRONT" />
+          <BoardMonster owner="PLAYER" position="FRONT" />
 
-      {/* 4) PLAYER BACK */}
-      <BoardMonster owner="PLAYER" position="BACK" />
-    </div>
-  </div>
-</section>
+          <BoardMonster owner="PLAYER" position="BACK" />
+        </div>
+      </div>
+    </section>
 
 
       {/* 🔵 BASE — JOGADOR */}
@@ -126,5 +148,6 @@ export default function Home() {
 
       </section>
     </main>
+    </DndContext>
   )
 }

@@ -21,34 +21,6 @@ const useGameStore = create<GameMatch>(() => ({
         },
       },
       {
-        lane: 2,
-        owner: 'PLAYER',
-        position: 'FRONT',
-        card: {
-          name: 'Menino gentil',
-          mana: 1,
-          energy: 1,
-          attack: 7,
-          life: 9,
-          art: '/Cards/good-boy.jpg',
-          class: 'cidadao'
-        },
-      },
-      {
-        lane: 3,
-        owner: 'PLAYER',
-        position: 'FRONT',
-        card: {
-          name: 'Menino gentil',
-          mana: 1,
-          energy: 1,
-          attack: 7,
-          life: 9,
-          art: '/Cards/good-boy.jpg',
-          class: 'cidadao'
-        },
-      },
-      {
         lane: 1,
         owner: 'CPU',
         position: 'FRONT',
