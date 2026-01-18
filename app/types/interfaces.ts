@@ -32,6 +32,9 @@ export{}
         hand: Card[] | number,
         deck: number,
         victoryPoints: number,
+        totalMana: number,
+        manaAvailable: number,
+
     }
 
     interface Card {

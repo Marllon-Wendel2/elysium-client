@@ -4,6 +4,7 @@ import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import Image from 'next/image'
 import { useRef, useEffect } from 'react'
+import useGameStore from '../store/gameStore'
 
 const CARD_BORDER_BY_CLASS: Record<string, string> = {
   cidadao: 'border-blue-400',
@@ -27,6 +28,9 @@ export default function Card({
   showInfos,
   onSelect,
 }: CardProps) {
+  const manaAvailable = useGameStore((state) => state.player.manaAvailable)
+  const cardAvaible = manaAvailable >= (card.mana ?? 0)
+
   const {
     attributes,
     listeners,
@@ -35,6 +39,7 @@ export default function Card({
     isDragging,
   } = useDraggable({
     id: card.id ?? `card-${index}`,
+    disabled: !cardAvaible,
   })
 
   const wasDragged = useRef(false)
@@ -50,6 +55,7 @@ export default function Card({
 
   const borderColor =
     CARD_BORDER_BY_CLASS[card.class] ?? 'border-neutral-400'
+
 
   return (
     <div
@@ -96,7 +102,7 @@ export default function Card({
           src={card.art}
           alt={card.name}
           fill
-          className="object-cover pointer-events-none"
+          className= {`object-cover pointer-events-none ${cardAvaible ? 'opacity-100' : 'opacity-50'}`}
         />
 
         {/* STATUS */}

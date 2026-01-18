@@ -142,11 +142,13 @@ const useGameStore = create<GameMatch>(() => ({
       
     ],
     deck: 5,
+    manaAvailable: 1
   } as PlayerState,
   cpu: {
     victoryPoints: 0,
     hand: 4,
-    deck: 20
+    deck: 20,
+    manaAvailable: 1
   } as PlayerState,
 
   turn: 1,

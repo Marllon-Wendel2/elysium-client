@@ -17,7 +17,8 @@ import {
 export default function Home() {
   const deckPlayer = useGameStore((state) => state.player.deck)
   const deckEnemy = useGameStore((state) => state.cpu.deck)
-
+  const manaAvailable = useGameStore((state) => state.player.manaAvailable)
+  const manaAvailableCpu = useGameStore((state) => state.cpu.manaAvailable)
   const playerVP = useGameStore((state) => state.player.victoryPoints)
   const enemyVP = useGameStore((state) => state.cpu.victoryPoints)
 
@@ -64,20 +65,45 @@ export default function Home() {
           <EnemyHand />
         </div>
 
-        {/* Vitórias inimigo */}
-        <div className="
-          flex flex-col items-center justify-center
-          min-w-20
-          bg-red-600/20 border border-red-500
-          text-red-300
-          rounded-lg px-3 py-2
-        ">
-          <span className="text-xs uppercase tracking-wide">
-            Vitória
-          </span>
-          <span className="text-2xl font-bold">
-            {enemyVP}/10
-          </span>
+        <div className="flex flex-col gap-2 items-center">
+          {/* Mana Counter Enemy */}
+          <div className="
+            relative group
+            flex flex-col items-center justify-center
+            min-w-20
+            bg-indigo-950/60 border border-indigo-500/30
+            text-indigo-300
+            rounded-xl px-3 py-2
+            backdrop-blur-md
+            overflow-hidden
+            shadow-[0_0_15px_rgba(99,102,241,0.15)]
+          ">
+            <div className="absolute -inset-1 bg-indigo-500/20 blur-lg group-hover:bg-indigo-500/30 transition-all duration-500"></div>
+            <span className="relative text-[10px] uppercase tracking-widest font-bold text-indigo-400">
+              Mana
+            </span>
+            <div className="relative flex items-baseline gap-0.5">
+              <span className="text-2xl font-black text-white drop-shadow-[0_0_8px_rgba(165,180,252,0.6)]">
+                {manaAvailableCpu}
+              </span>
+            </div>
+          </div>
+
+          {/* Vitórias inimigo */}
+          <div className="
+            flex flex-col items-center justify-center
+            min-w-20
+            bg-red-600/20 border border-red-500
+            text-red-300
+            rounded-lg px-3 py-2
+          ">
+            <span className="text-xs uppercase tracking-wide">
+              Vitória
+            </span>
+            <span className="text-2xl font-bold">
+              {enemyVP}/10
+            </span>
+          </div>
         </div>
 
       </section>
@@ -110,20 +136,46 @@ export default function Home() {
       {/* 🔵 BASE — JOGADOR */}
       <section className="grid grid-cols-[auto_1fr_auto] items-center px-6 pb-4">
 
-        {/* Vitórias jogador */}
-        <div className="
-          flex flex-col items-center justify-center
-          min-w-20
-          bg-emerald-600/20 border border-emerald-500
-          text-emerald-300
-          rounded-lg px-3 py-2
-        ">
-          <span className="text-xs uppercase tracking-wide">
-            Vitória
-          </span>
-          <span className="text-2xl font-bold">
-            {playerVP}/10
-          </span>
+        <div className="flex flex-col gap-2 z-10 items-center">
+          {/* Mana Counter */}
+          <div className="
+            relative group
+            flex flex-col items-center justify-center
+            min-w-20
+            bg-indigo-950/60 border border-indigo-500/30
+            text-indigo-300
+            rounded-xl px-3 py-2
+            backdrop-blur-md
+            overflow-hidden
+            shadow-[0_0_15px_rgba(99,102,241,0.15)]
+          ">
+            <div className="absolute -inset-1 bg-indigo-500/20 blur-lg group-hover:bg-indigo-500/30 transition-all duration-500"></div>
+            <span className="relative text-[10px] uppercase tracking-widest font-bold text-indigo-400">
+              Mana
+            </span>
+            <div className="relative flex items-baseline gap-0.5">
+              <span className="text-2xl font-black text-white drop-shadow-[0_0_8px_rgba(165,180,252,0.6)]">
+                {manaAvailable}
+              </span>
+            </div>
+          </div>
+
+          {/* Vitórias jogador */}
+          <div className="
+            flex flex-col items-center justify-center
+            min-w-20
+            bg-emerald-950/60 border border-emerald-500/30
+            text-emerald-400
+            rounded-xl px-3 py-2
+            backdrop-blur-md
+          ">
+            <span className="text-[10px] uppercase tracking-widest font-bold text-emerald-500">
+              Vitória
+            </span>
+            <span className="text-2xl font-black">
+              {playerVP}<span className="text-sm text-emerald-700">/10</span>
+            </span>
+          </div>
         </div>
 
         {/* Mão jogador */}
