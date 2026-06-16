@@ -1,16 +1,9 @@
 'use client'
 
 import PlayerHand from './PlayerHand'
-import BoardMonster from './BoardMonster'
+import BoardMonster from '../components/BoardMonster'
 import Image from 'next/image'
 
-import { 
-  DndContext, 
-  PointerSensor, 
-  useSensor, 
-  useSensors,
-  DragEndEvent
-} from '@dnd-kit/core'
 
 export default function GameScreen() {
 

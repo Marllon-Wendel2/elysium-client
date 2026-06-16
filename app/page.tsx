@@ -1,232 +1,117 @@
 'use client'
 
-import Image from "next/image"
-import EnemyHand from "./componentes/EnemyHand"
-import PlayerHand from "./componentes/PlayerHand"
-import useGameStore from "./store/gameStore"
-import BoardMonster from "./componentes/BoardMonster"
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
-import {
-  DndContext,
-  DragEndEvent,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core'
-import { useState } from "react"
+export default function LoginPage() {
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
-export default function Home() {
-  const deckPlayer = useGameStore((state) => state.player.deck)
-  const deckEnemy = useGameStore((state) => state.cpu.deck)
-  const manaAvailable = useGameStore((state) => state.player.manaAvailable)
-  const manaAvailableCpu = useGameStore((state) => state.cpu.manaAvailable)
-  const playerVP = useGameStore((state) => state.player.victoryPoints)
-  const enemyVP = useGameStore((state) => state.cpu.victoryPoints)
-  const [attackingSlot, setAttackingSlot] = useState<any | null>(null)
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setIsLoading(true)
 
-    const sensors = useSensors(
-      useSensor(PointerSensor, {
-        activationConstraint: { distance: 8 },
+    try {
+      const response = await fetch('http://localhost:3001/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       })
-    )
-    function handleDragEnd(event: DragEndEvent) {
-      const { active, over } = event
-  
-      if (!over) {
-        console.log('❌ Drop fora de slot')
-        return
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Erro ao fazer login')
       }
-  
-      console.log('✅ Carta:', active.id)
-      console.log('🎯 Slot:', over.id)
+
+      // Salvar dados
+      localStorage.setItem('access_token', data.access_token)
+      localStorage.setItem('user', JSON.stringify(data.user))
+
+      console.log('✅ Login bem sucedido:', data.user.firstName)
+      console.log('🔑 Token salvo')
+
+      // Redirecionar para o lobby
+      router.push('/lobby')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao fazer login')
+      console.error('❌ Erro no login:', err)
+    } finally {
+      setIsLoading(false)
     }
+  }
 
   return (
-    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-    <main 
-      className="w-screen h-screen bg-neutral-950 grid grid-rows-[auto_1fr_auto]"
-      onClick={() => {
-        if (attackingSlot) setAttackingSlot(null)
-      }}
-    >
-
-      {/* 🔴 TOPO — INIMIGO */}
-      <section className="grid grid-cols-[auto_1fr_auto] items-center px-6 pt-4">
-
-        {/* Deck inimigo */}
-        <div className="relative w-24 h-36">
-          <Image
-            src="/Cards/verso.jpg"
-            alt="Deck inimigo"
-            fill
-            className="object-cover rounded shadow-lg"
-          />
-          <span className="absolute bottom-2 left-1/2 -translate-x-1/2
-            bg-black/70 text-white text-xs px-2 py-1 rounded-full">
-            {deckEnemy} cartas
-          </span>
-        </div>
-
-        {/* Mão inimiga */}
-        <div className="flex justify-center">
-          <EnemyHand />
-        </div>
-
-        <div className="flex flex-col gap-2 items-center">
-          {/* Mana Counter Enemy */}
-          <div className="
-            relative group
-            flex flex-col items-center justify-center
-            min-w-20
-            bg-indigo-950/60 border border-indigo-500/30
-            text-indigo-300
-            rounded-xl px-3 py-2
-            backdrop-blur-md
-            overflow-hidden
-            shadow-[0_0_15px_rgba(99,102,241,0.15)]
-          ">
-            <div className="absolute -inset-1 bg-indigo-500/20 blur-lg group-hover:bg-indigo-500/30 transition-all duration-500"></div>
-            <span className="relative text-[10px] uppercase tracking-widest font-bold text-indigo-400">
-              Mana
-            </span>
-            <div className="relative flex items-baseline gap-0.5">
-              <span className="text-2xl font-black text-white drop-shadow-[0_0_8px_rgba(165,180,252,0.6)]">
-                {manaAvailableCpu}
-              </span>
-            </div>
-          </div>
-
-          {/* Vitórias inimigo */}
-          <div className="
-            flex flex-col items-center justify-center
-            min-w-20
-            bg-red-600/20 border border-red-500
-            text-red-300
-            rounded-lg px-3 py-2
-          ">
-            <span className="text-xs uppercase tracking-wide">
-              Vitória
-            </span>
-            <span className="text-2xl font-bold">
-              {enemyVP}/10
-            </span>
-          </div>
-        </div>
-
-      </section>
-
-      {/* 🟢 CENTRO — BOARD */}
-      <section className="flex items-center justify-center flex-1">
-      <div className="relative h-[90%] aspect-2/3 max-w-full">
-        <Image
-          src="/Cards/bord.jpg"
-          alt="Tabuleiro"
-          fill
-          priority
-          className="object-cover rounded-lg"
-        />
-
-        {/* Container das 4 linhas */}
-        <div className="absolute inset-0 flex flex-col justify-between py-10">
-          <BoardMonster 
-            owner="CPU" 
-            position="BACK" 
-            attackingSlot={attackingSlot} 
-            setAttackingSlot={setAttackingSlot}
-          />
-
-          <BoardMonster 
-            owner="CPU" 
-            position="FRONT" 
-            attackingSlot={attackingSlot} 
-            setAttackingSlot={setAttackingSlot}
-          />
-
-          <BoardMonster 
-            owner="PLAYER" 
-            position="FRONT" 
-            attackingSlot={attackingSlot} 
-            setAttackingSlot={setAttackingSlot}
-          />
-
-          <BoardMonster 
-            owner="PLAYER" 
-            position="BACK" 
-            attackingSlot={attackingSlot} 
-            setAttackingSlot={setAttackingSlot}
-          />
-        </div>
+    <main className="w-screen h-screen bg-neutral-950 flex items-center justify-center p-4">
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-indigo-600/20 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-600/20 rounded-full blur-3xl" />
       </div>
-    </section>
 
+      <div className="relative w-full max-w-md">
+        <div className="text-center mb-8">
+          <h1 className="text-5xl font-black text-white mb-2 tracking-tight">
+            ⚔️ Card Battle
+          </h1>
+          <p className="text-neutral-400 text-sm">
+            Entre para começar a jogar
+          </p>
+        </div>
 
-      {/* 🔵 BASE — JOGADOR */}
-      <section className="grid grid-cols-[auto_1fr_auto] items-center px-6 pb-4">
+        <form 
+          onSubmit={handleSubmit}
+          className="bg-neutral-900/80 backdrop-blur-xl border border-neutral-800 rounded-2xl p-8 shadow-2xl space-y-6"
+        >
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-neutral-300 mb-2">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              placeholder="seu@email.com"
+              className="w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-xl text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+            />
+          </div>
 
-        <div className="flex flex-col gap-2 z-10 items-center">
-          {/* Mana Counter */}
-          <div className="
-            relative group
-            flex flex-col items-center justify-center
-            min-w-20
-            bg-indigo-950/60 border border-indigo-500/30
-            text-indigo-300
-            rounded-xl px-3 py-2
-            backdrop-blur-md
-            overflow-hidden
-            shadow-[0_0_15px_rgba(99,102,241,0.15)]
-          ">
-            <div className="absolute -inset-1 bg-indigo-500/20 blur-lg group-hover:bg-indigo-500/30 transition-all duration-500"></div>
-            <span className="relative text-[10px] uppercase tracking-widest font-bold text-indigo-400">
-              Mana
-            </span>
-            <div className="relative flex items-baseline gap-0.5">
-              <span className="text-2xl font-black text-white drop-shadow-[0_0_8px_rgba(165,180,252,0.6)]">
-                {manaAvailable}
-              </span>
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-neutral-300 mb-2">
+              Senha
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              placeholder="••••••••"
+              className="w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-xl text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+            />
+          </div>
+
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-xl px-4 py-3 flex items-center gap-2">
+              <span>⚠️</span>
+              {error}
             </div>
-          </div>
+          )}
 
-          {/* Vitórias jogador */}
-          <div className="
-            flex flex-col items-center justify-center
-            min-w-20
-            bg-emerald-950/60 border border-emerald-500/30
-            text-emerald-400
-            rounded-xl px-3 py-2
-            backdrop-blur-md
-          ">
-            <span className="text-[10px] uppercase tracking-widest font-bold text-emerald-500">
-              Vitória
-            </span>
-            <span className="text-2xl font-black">
-              {playerVP}<span className="text-sm text-emerald-700">/10</span>
-            </span>
-          </div>
-        </div>
-
-        {/* Mão jogador */}
-        <div className="absolute bottom-0 left-0 w-full flex justify-center">
-          <PlayerHand />
-        </div>
-        <div className=" bottom-0 left-0 w-full flex justify-center"></div>
-
-        {/* Deck jogador */}
-        <div className="relative left-2 w-24 h-36">
-          <Image
-            src="/Cards/verso.jpg"
-            alt="Deck jogador"
-            fill
-            className="object-cover rounded shadow-lg"
-          />
-          <span className="absolute bottom-2 left-1/2 -translate-x-1/2
-            bg-black/70 text-white text-xs px-2 py-1 rounded-full">
-            {deckPlayer} cartas
-          </span>
-        </div>
-
-      </section>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-500 disabled:bg-neutral-700 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-indigo-600/25"
+          >
+            {isLoading ? 'Entrando...' : 'Entrar'}
+          </button>
+        </form>
+      </div>
     </main>
-    </DndContext>
   )
 }

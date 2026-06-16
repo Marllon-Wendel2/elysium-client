@@ -1,9 +1,7 @@
 'use client'
 
-import { useDraggable } from '@dnd-kit/core'
-import { CSS } from '@dnd-kit/utilities'
+import { useRef } from 'react'
 import Image from 'next/image'
-import { useRef, useEffect } from 'react'
 import useGameStore from '../store/gameStore'
 
 const CARD_BORDER_BY_CLASS: Record<string, string> = {
@@ -31,52 +29,20 @@ export default function Card({
   const manaAvailable = useGameStore((state) => state.player.manaAvailable)
   const cardAvaible = manaAvailable >= (card.mana ?? 0) || card.class !== 'magic' && card.class !== 'equipment'
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    isDragging,
-  } = useDraggable({
-    id: card.id ?? `card-${index}`,
-    disabled: !cardAvaible,
-  })
-
-  const wasDragged = useRef(false)
-
-  useEffect(() => {
-    if (isDragging) wasDragged.current = true
-  }, [isDragging])
-
-  const style = {
-    transform: CSS.Translate.toString(transform),
-    zIndex: isDragging ? 1000 : index,
-  }
-
   const borderColor =
     CARD_BORDER_BY_CLASS[card.class] ?? 'border-neutral-400'
 
-
   return (
     <div
-      ref={setNodeRef}
-      {...listeners}
-      {...attributes}
       style={{
-        ...style,
         marginLeft: index === 0 ? 0 : -overlap,
+        zIndex: index,
       }}
       className={`
-        relative group cursor-grab
-        ${!isDragging ? 'hover:-translate-y-6' : 'cursor-grabbing'}
+        relative group cursor-pointer
+        hover:-translate-y-6 transition-transform
       `}
-      onClick={() => {
-        if (wasDragged.current) {
-          wasDragged.current = false
-          return
-        }
-        onSelect(card)
-      }}
+      onClick={() => onSelect(card)}
     >
       <div
         className={`
@@ -87,14 +53,7 @@ export default function Card({
           ${
             showInfos
               ? 'absolute -top-6 w-32 h-48 z-50'
-              : `
-                w-24 h-36
-                ${
-                  !isDragging
-                    ? 'group-hover:w-32 group-hover:h-48 group-hover:-top-6 group-hover:z-50'
-                    : ''
-                }
-              `
+              : 'w-24 h-36 group-hover:w-32 group-hover:h-48 group-hover:-top-6 group-hover:z-50'
           }
         `}
       >
@@ -102,7 +61,7 @@ export default function Card({
           src={card.art}
           alt={card.name}
           fill
-          className= {`object-cover pointer-events-none ${cardAvaible ? 'opacity-100' : 'opacity-50'}`}
+          className={`object-cover pointer-events-none ${cardAvaible ? 'opacity-100' : 'opacity-50'}`}
         />
 
         {/* STATUS */}
@@ -111,13 +70,7 @@ export default function Card({
             absolute inset-0 flex flex-col justify-between p-2
             text-xs font-bold text-white pointer-events-none
             transition-opacity duration-200
-            ${
-              showInfos
-                ? 'opacity-100'
-                : !isDragging
-                  ? 'opacity-0 group-hover:opacity-100'
-                  : 'opacity-0'
-            }
+            ${showInfos ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}
           `}
         >
           <div className="flex justify-between">

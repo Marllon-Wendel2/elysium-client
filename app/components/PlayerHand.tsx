@@ -4,7 +4,7 @@ import { useState } from "react"
 import useGameStore from "../store/gameStore"
 import Card from "./Card"
 import CardModal from "./Modals/CardDetailsInHand"
-import { DragEndEvent } from '@dnd-kit/core'
+
 
 const CARD_WIDTH = 96
 const MAX_WIDTH = 600
@@ -22,18 +22,6 @@ export default function PlayerHand() {
     playerHand.length > 1 && totalWidth > MAX_WIDTH
       ? (totalWidth - MAX_WIDTH) / (playerHand.length - 1)
       : 0
-
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event
-
-    if (!over) {
-      console.log('❌ Drop fora de um slot')
-      return
-    }
-
-    console.log('✅ Carta:', active.id)
-    console.log('🎯 Slot:', over.id)
-  }
 
   return (
     <>
