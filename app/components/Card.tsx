@@ -1,10 +1,16 @@
 'use client'
 
-import { useRef } from 'react'
 import Image from 'next/image'
 import useGameStore from '../store/gameStore'
+import type { CardInstance } from '../types/game'
 
+// Mapeamento de classes para cores de borda
 const CARD_BORDER_BY_CLASS: Record<string, string> = {
+  citizen: 'border-blue-400',
+  army: 'border-red-500',
+  mage: 'border-purple-500',
+  noble: 'border-yellow-400',
+  // Classes antigas (mantendo compatibilidade)
   cidadao: 'border-blue-400',
   exercito: 'border-red-500',
   mago: 'border-purple-500',
@@ -12,11 +18,11 @@ const CARD_BORDER_BY_CLASS: Record<string, string> = {
 }
 
 interface CardProps {
-  card: Card
+  card: CardInstance        // Mudou: Card → CardInstance
   index: number
   overlap: number
   showInfos: boolean
-  onSelect: (card: Card) => void
+  onSelect: (card: CardInstance) => void  // Mudou: Card → CardInstance
 }
 
 export default function Card({
@@ -27,10 +33,16 @@ export default function Card({
   onSelect,
 }: CardProps) {
   const manaAvailable = useGameStore((state) => state.player.manaAvailable)
-  const cardAvaible = manaAvailable >= (card.mana ?? 0) || card.class !== 'magic' && card.class !== 'equipment'
+  
+  // Acessa os dados pela nova estrutura
+  const { base, state } = card
+  
+  // Verifica se a carta pode ser jogada (mana suficiente)
+  const cardAvaible = manaAvailable >= (base.mana ?? 0) || 
+    (base.class !== 'magic' && base.class !== 'equipment')
 
   const borderColor =
-    CARD_BORDER_BY_CLASS[card.class] ?? 'border-neutral-400'
+    CARD_BORDER_BY_CLASS[base.class] ?? 'border-neutral-400'
 
   return (
     <div
@@ -58,13 +70,13 @@ export default function Card({
         `}
       >
         <Image
-          src={card.art}
-          alt={card.name}
+          src={base.artUrl}         // Mudou: card.art → base.artUrl
+          alt={base.name}           // Mudou: card.name → base.name
           fill
           className={`object-cover pointer-events-none ${cardAvaible ? 'opacity-100' : 'opacity-50'}`}
         />
 
-        {/* STATUS */}
+        {/* STATUS - Usa os valores do state (atuais, não os base) */}
         <div
           className={`
             absolute inset-0 flex flex-col justify-between p-2
@@ -75,19 +87,19 @@ export default function Card({
         >
           <div className="flex justify-between">
             <span className="bg-indigo-600/80 px-2 py-1 rounded-full">
-              🔮 {card.mana}
+              🔮 {base.mana}        // Mana é do base (não muda)
             </span>
             <span className="bg-yellow-500/80 px-2 py-1 rounded-full">
-              🔋 {card.energy}
+              🔋 {state.currentEnergy}  // Energia atual
             </span>
           </div>
 
           <div className="flex justify-between">
             <span className="bg-red-600/80 px-2 py-1 rounded-full">
-              ⚔️ {card.attack}
+              ⚔️ {state.currentAttack}  // Ataque atual
             </span>
             <span className="bg-emerald-600/80 px-2 py-1 rounded-full">
-              🛡️ {card.life}
+              🛡️ {state.currentLife}    // Vida atual
             </span>
           </div>
         </div>

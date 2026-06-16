@@ -1,32 +1,26 @@
 'use client'
 
 import useGameStore from "../store/gameStore"
-import Image from "next/image"// ajuste se necessário
+import Image from "next/image"
 
 const CARD_WIDTH = 96
 const MAX_WIDTH = 600
 
 export default function EnemyHand() {
-  const hand = useGameStore((state) => state.cpu.hand)
+  // Mudou: state.cpu.hand → state.opponent.handCount
+  const handCount = useGameStore((state) => state.opponent.handCount)
 
-  const numberCards =
-    typeof hand === "number"
-      ? hand
-      : Array.isArray(hand)
-        ? hand.length
-        : 0
+  if (!handCount || handCount <= 0) return null
 
-  if (numberCards <= 0) return null
-
-  const totalWidth = numberCards * CARD_WIDTH
+  const totalWidth = handCount * CARD_WIDTH
   const overlap =
-    numberCards > 1 && totalWidth > MAX_WIDTH
-      ? (totalWidth - MAX_WIDTH) / (numberCards - 1)
+    handCount > 1 && totalWidth > MAX_WIDTH
+      ? (totalWidth - MAX_WIDTH) / (handCount - 1)
       : 0
 
   return (
     <div className="flex justify-center">
-      {Array.from({ length: numberCards }).map((_, index) => (
+      {Array.from({ length: handCount }).map((_, index) => (
         <div
           key={index}
           className="relative h-36"
@@ -38,7 +32,7 @@ export default function EnemyHand() {
         >
           <Image
             src="/Cards/verso.jpg"
-            alt="Carta inimiga"
+            alt="Carta do oponente"
             fill
             className="object-cover rounded"
           />

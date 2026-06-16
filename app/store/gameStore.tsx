@@ -1,192 +1,95 @@
-import { create } from "zustand";
+import { create } from 'zustand'
+import type { 
+  GamePhase, 
+  Winner, 
+  BoardState, 
+  PlayerView, 
+  OpponentView,
+  GameSyncEvent 
+} from '../types/game'
 
-const useGameStore = create<GameMatch>(() => ({
-  phase: "PLAYING",
-  currentTurn: "PLAYER",
+// ==========================================
+// INTERFACE DA STORE
+// ==========================================
 
-  board: {
-    slots:[
-      {
-        lane: 1,
-        owner: 'PLAYER',
-        position: 'FRONT',
-        card: {
-          name: 'Menino gentil',
-          mana: 1,
-          energy: 1,
-          attack: 7,
-          life: 9,
-          art: '/Cards/good-boy.jpg',
-          class: 'cidadao'
-        },
+interface GameStore {
+  // Fase atual
+  phase: GamePhase
+  turn: number
+  winner: Winner
+  
+  // Board
+  board: BoardState
+  
+  // Você (jogador logado)
+  player: PlayerView
+  
+  // Oponente
+  opponent: OpponentView
+  
+  // Controles
+  showInfos: boolean
+  
+  // Ações
+  syncGameState: (event: GameSyncEvent) => void
+  setShowInfos: (show: boolean) => void
+}
 
-      },
-      {
-        lane: 1,
-        owner: 'CPU',
-        position: 'BACK',
-        card: {
-          name: 'Menino gentil',
-          mana: 1,
-          energy: 1,
-          attack: 7,
-          life: 9,
-          art: '/Cards/good-boy.jpg',
-          class: 'cidadao'
-        },
-      },
-      {
-        lane: 1,
-        owner: 'PLAYER',
-        position: 'BACK',
-        card: {
-          name: 'Menino gentil',
-          mana: 1,
-          energy: 1,
-          attack: 7,
-          life: 9,
-          range: 1,
-          art: '/Cards/good-boy.jpg',
-          class: 'cidadao'
-        },
-      },
-      {
-        lane: 1,
-        owner: 'CPU',
-        position: 'FRONT',
-        card: {
-          name: 'Menino gentil',
-          mana: 1,
-          energy: 1,
-          attack: 7,
-          life: 9,
-          art: '/Cards/good-boy.jpg',
-          class: 'cidadao'
-        },
-      },
-      {
-        lane: 2,
-        owner: 'PLAYER',
-        position: 'FRONT',
-        card: {
-        name: 'Soldado iniciado',
-        mana: 4,
-        energy: 4,
-        attack: 20,
-        life: 25,
-        art: '/Cards/arthur.jpg',
-        class: 'exercito',
-        apend: [
-          {
-            name: 'Espada Divina',
-            mana: 0,
-            energy: 4,
-            art: '/Cards/divine-sword.jpg',
-            class: 'equipment',
-            effect: {
-              type: "BUFF",
-              value: 2
-            }
-          }
-        ],
-        range: 1
-      },
-      }
-    ]
-  } as BoardState,
+// ==========================================
+// STORE
+// ==========================================
 
-  player: {
-    victoryPoints: 0,
-    hand: [
-      {
-        name: 'Menino gentil',
-        mana: 1,
-        energy: 1,
-        attack: 7,
-        life: 9,
-        art: '/Cards/good-boy.jpg',
-        class: 'cidadao'
-      },
-      {
-        name: 'Soldado iniciado',
-        mana: 4,
-        energy: 4,
-        attack: 20,
-        life: 25,
-        art: '/Cards/arthur.jpg',
-        class: 'exercito'
-      },
-            {
-        name: 'Soldado iniciado',
-        mana: 4,
-        energy: 4,
-        attack: 20,
-        life: 25,
-        art: '/Cards/arthur.jpg',
-        class: 'exercito'
-      },
-            {
-        name: 'Soldado iniciado',
-        mana: 4,
-        energy: 4,
-        attack: 20,
-        life: 25,
-        art: '/Cards/arthur.jpg',
-        class: 'exercito'
-      },
-      {
-        name: 'Soldado iniciado',
-        mana: 4,
-        energy: 4,
-        attack: 20,
-        life: 25,
-        art: '/Cards/arthur.jpg',
-        class: 'exercito'
-      },
-            {
-        name: 'Soldado iniciado',
-        mana: 4,
-        energy: 4,
-        attack: 20,
-        life: 25,
-        art: '/Cards/arthur.jpg',
-        class: 'exercito'
-      },
-      {
-        name: 'Soldado iniciado',
-        mana: 4,
-        energy: 4,
-        attack: 20,
-        life: 25,
-        art: '/Cards/arthur.jpg',
-        class: 'exercito'
-      },
-      {
-        name: 'Espada Divina',
-        mana: 0,
-        energy: 4,
-        art: '/Cards/divine-sword.jpg',
-        class: 'equipment',
-        effect: {
-          type: "BUFF",
-          value: 2
-        }
-      },
-      
-    ],
-    deck: 5,
-    manaAvailable: 1
-  } as PlayerState,
-  cpu: {
-    victoryPoints: 0,
-    hand: 4,
-    deck: 20,
-    manaAvailable: 1
-  } as PlayerState,
-
-  turn: 1,
+const useGameStore = create<GameStore>((set) => ({
+  // Estado inicial (vazio, será preenchido pelo GAME_SYNC)
+  phase: 'WAITING',
+  turn: 0,
   winner: 'NONE',
-  showInfos: false
-}));
+  
+  board: {
+    slots: []
+  },
+  
+  player: {
+    hand: [],
+    deckCount: 0,
+    victoryPoints: 0,
+    totalMana: 0,
+    manaAvailable: 0,
+  },
+  
+  opponent: {
+    handCount: 0,
+    deckCount: 0,
+    victoryPoints: 0,
+  },
+  
+  showInfos: false,
 
-export default useGameStore;
+  // ==========================================
+  // AÇÕES
+  // ==========================================
+  
+  syncGameState: (event: GameSyncEvent) => {
+    const { state } = event
+    
+    console.log('📊 Atualizando gameStore...')
+    console.log('   Fase:', state.phase)
+    console.log('   Turno:', state.turn)
+    console.log('   Cartas na mão:', state.you.hand.length)
+    console.log('   Slots no board:', state.board.slots.length)
+    console.log('   Mana:', state.you.manaAvailable, '/', state.you.totalMana)
+    
+    set({
+      phase: state.phase,
+      turn: state.turn,
+      winner: state.winner,
+      board: state.board,
+      player: state.you,
+      opponent: state.opponent,
+    })
+  },
+  
+  setShowInfos: (show: boolean) => set({ showInfos: show }),
+}))
+
+export default useGameStore

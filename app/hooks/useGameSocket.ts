@@ -2,21 +2,26 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
+import useGameStore from '../store/gameStore'
+import type { GameSyncEvent } from '../types/game'
 
 export function useGameSocket() {
   const socketRef = useRef<Socket | null>(null)
   
-  // Estados de conexão
   const [isConnected, setIsConnected] = useState(false)
   const [roomId, setRoomId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  
-  // Estados do jogo
   const [isWaiting, setIsWaiting] = useState(false)
-  const [gamePhase, setGamePhase] = useState<string>('LOBBY')  // NOVO
-  const [waitingOpponent, setWaitingOpponent] = useState(false)  // NOVO
+  const [gamePhase, setGamePhase] = useState<string>('LOBBY')
+  const [waitingOpponent, setWaitingOpponent] = useState(false)
 
   const connect = () => {
+    // Se já está conectado, não conecta de novo
+    if (socketRef.current?.connected) {
+      console.log('⚠️ Já está conectado!')
+      return
+    }
+
     const token = localStorage.getItem('access_token')
     
     if (!token) {
@@ -24,7 +29,7 @@ export function useGameSocket() {
       return
     }
 
-    console.log('🔌 Tentando conectar ao WebSocket...')
+    console.log('🔌 Conectando ao WebSocket...')
 
     const socket = io('ws://localhost:3002', {
       auth: {
@@ -57,50 +62,55 @@ export function useGameSocket() {
     socket.on('ROOM_CREATED', (data: string) => {
       console.log('🏰 Sala criada com código:', data)
       setRoomId(data)
-      setIsWaiting(true)
+      setIsWaiting(true)  // Mostra modal de compartilhar
       setError(null)
     })
 
-    // ==========================================
-    // EVENTOS DO SETUP (NOVOS)
-    // ==========================================
-    
-    // Ambos jogadores recebem quando entram na sala
     socket.on('ROOM_JOINED', () => {
       console.log('🚪 Entrou na sala!')
       setIsWaiting(false)
-      // Não redireciona ainda, espera o SLOT_CHOICE
+      setError(null)
+      // Aguarda SLOT_CHOICE
     })
 
-    // Servidor pede para escolher slots
+    // ==========================================
+    // EVENTOS DO SETUP
+    // ==========================================
     socket.on('SLOT_CHOICE', () => {
       console.log('🎯 Servidor pediu escolha de slots!')
-      setGamePhase('SETUP')  // Muda para fase de setup
+      setGamePhase('SETUP')
       setIsWaiting(false)
       setWaitingOpponent(false)
     })
 
-    // Confirmação individual de que seus slots foram recebidos
     socket.on('SLOTS_CONFIRMED', () => {
       console.log('✅ Seus slots foram confirmados!')
-      setWaitingOpponent(true)  // Mostra "aguardando oponente"
+      setWaitingOpponent(true)
     })
 
-    // Ambos jogadores recebem quando o setup termina
     socket.on('SETUP_FINISHED', () => {
-      console.log('🎮 Setup finalizado! Iniciando jogo...')
+      console.log('🎮 Setup finalizado! Aguardando GAME_SYNC...')
       setWaitingOpponent(false)
-      setGamePhase('GAME')
-      window.location.href = '/game'
     })
 
-    // Mensagens de erro
+    // ==========================================
+    // EVENTOS DO JOGO
+    // ==========================================
+    socket.on('GAME_SYNC', (event: GameSyncEvent) => {
+      console.log('🎮 Recebeu GAME_SYNC')
+      console.log('   Fase:', event.state.phase)
+      
+      const store = useGameStore.getState()
+      store.syncGameState(event)
+      
+      setGamePhase(event.state.phase)
+    })
+
     socket.on('ERROR', (message: string) => {
       console.error('❌ Erro do servidor:', message)
       setError(message)
     })
 
-    // Erro específico do setup
     socket.on('SETUP_ERROR', (message: string) => {
       console.error('❌ Erro no setup:', message)
       setError(message)
@@ -111,11 +121,11 @@ export function useGameSocket() {
   }
 
   // ==========================================
-  // FUNÇÕES DO LOBBY
+  // FUNÇÕES DO JOGO
   // ==========================================
   const createRoom = () => {
-    if (!socketRef.current || !isConnected) {
-      setError('Não está conectado ao servidor')
+    if (!socketRef.current?.connected) {
+      setError('Conecte-se primeiro')
       return
     }
 
@@ -124,8 +134,8 @@ export function useGameSocket() {
   }
 
   const joinRoom = (roomId: string) => {
-    if (!socketRef.current || !isConnected) {
-      setError('Não está conectado ao servidor')
+    if (!socketRef.current?.connected) {
+      setError('Conecte-se primeiro')
       return
     }
 
@@ -133,22 +143,17 @@ export function useGameSocket() {
     socketRef.current.emit('JOIN_ROOM', roomId)
   }
 
-  // ==========================================
-  // FUNÇÃO DO SETUP (NOVA)
-  // ==========================================
   const submitSlots = (front: number, back: number) => {
-    if (!socketRef.current || !isConnected) {
+    if (!socketRef.current?.connected) {
       setError('Não está conectado ao servidor')
       return
     }
 
-    // Validação: máximo 10 slots no total
     if (front + back > 10) {
       setError('O total de slots não pode passar de 10')
       return
     }
 
-    // Validação: mínimo 1 em cada
     if (front < 1 || back < 1) {
       setError('É necessário pelo menos 1 slot em cada linha')
       return
@@ -171,6 +176,7 @@ export function useGameSocket() {
     }
   }
 
+  // Limpeza ao desmontar
   useEffect(() => {
     return () => {
       disconnect()
@@ -178,23 +184,18 @@ export function useGameSocket() {
   }, [])
 
   return {
-    // Conexão
     connect,
     disconnect,
-    isConnected,
-    error,
-    setError,
-    
-    // Lobby
     createRoom,
     joinRoom,
+    submitSlots,
+    isConnected,
     roomId,
     isWaiting,
-    setIsWaiting,
-    
-    // Setup (NOVOS)
     gamePhase,
-    submitSlots,
     waitingOpponent,
+    error,
+    setError,
+    setIsWaiting,
   }
 }

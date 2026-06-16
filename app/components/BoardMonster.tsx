@@ -1,14 +1,14 @@
 'use client'
 
-import { useDroppable } from "@dnd-kit/core"
 import Image from "next/image"
 import useGameStore from "../store/gameStore"
 import { useState } from "react"
 import CardDetailsInBoard from "./Modals/CardModalInBoard"
+import type { BoardSlot as BoardSlotType } from "../types/game"
 
 interface BoardMonsterProps {
-  owner: "PLAYER" | "CPU"
-  position: Position
+  owner: "PLAYERONE" | "PLAYERTWO"  // Mudou: PLAYER/CPU → PLAYERONE/PLAYERTWO
+  position: "FRONT" | "BACK"
   attackingSlot?: any
   setAttackingSlot?: (slot: any) => void
 }
@@ -17,14 +17,15 @@ const CARD_WIDTH = 96
 const CARD_HEIGHT = 144
 
 const CARD_BORDER_BY_CLASS: Record<string, string> = {
-  cidadao: "border-blue-400",
-  exercito: "border-red-500",
-  mago: "border-purple-500",
-  nobre: "border-yellow-400",
+  citizen: "border-blue-400",
+  army: "border-red-500",
+  mage: "border-purple-500",
+  noble: "border-yellow-400",
+  spell: "border-cyan-400",
+  equipment: "border-amber-400",
 }
 
-function BoardSlot({
-  id,
+function BoardSlotCard({
   slot,
   isEnemy,
   onClick,
@@ -32,167 +33,172 @@ function BoardSlot({
   isAttackMode,
   isAttacker,
 }: {
-  id: string
-  slot: any
+  slot: BoardSlotType
   isEnemy: boolean
-  onClick: (card: any) => void
+  onClick: (slot: BoardSlotType) => void
   isTarget: boolean
   isAttackMode: boolean
   isAttacker: boolean
 }) {
-  const { setNodeRef, isOver } = useDroppable({
-    id,
-    disabled: isEnemy,
-  })
+  const card = slot.cardInstance
+  const isDimmed = isAttackMode && card && !isTarget && !isAttacker
 
-  const borderColor = isEnemy
-    ? "border-neutral-400"
-    : CARD_BORDER_BY_CLASS[slot?.card?.class ?? ""] ?? "border-neutral-400"
-
-  const isDimmed = isAttackMode && slot?.card && !isTarget && !isAttacker
+  const borderColor = card
+    ? (CARD_BORDER_BY_CLASS[card.base.class] ?? "border-neutral-400")
+    : "border-neutral-700"
 
   return (
     <div
-      ref={setNodeRef}
-      onClick={() => slot && onClick(slot)}
+      onClick={() => onClick(slot)}
       style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}
       className={`
-        relative border-2
-        rounded-lg shadow-lg
+        relative border-2 rounded-lg shadow-lg
         bg-black/20 flex items-center justify-center
-        transition-colors
-        ${isTarget ? "border-red-500 bg-red-500/20 cursor-crosshair animate-pulse" : isOver ? "bg-green-500/30 border-green-400" : borderColor}
+        transition-all
+        ${isTarget 
+          ? "border-red-500 bg-red-500/20 cursor-crosshair animate-pulse" 
+          : isAttacker 
+            ? "border-yellow-500 bg-yellow-500/20" 
+            : borderColor}
         ${isDimmed ? "opacity-50" : ""}
-        ${slot?.card ? "cursor-pointer hover:brightness-110" : ""}
+        ${card ? "cursor-pointer hover:brightness-110" : ""}
       `}
     >
-      {slot?.card ? (
+      {card ? (
         <>
-          {slot.card.apend?.map((appendCard: any, index: number) => (
+          {/* Equipamentos (se houver) */}
+          {card.state.equipment?.map((equip, index) => (
             <div
-              key={index}
-              className="absolute w-full h-full rounded-lg overflow-hidden border border-neutral-600 bg-neutral-900 shadow-sm"
-              style={{
-                top: (index + 1) * 15,
-              }}
+              key={equip.instanceId}
+              className="absolute w-full h-full rounded-lg overflow-hidden 
+                         border border-neutral-600 bg-neutral-900 shadow-sm"
+              style={{ top: (index + 1) * 15 }}
             >
               <Image
-                src={appendCard.art}
-                alt={appendCard.name}
+                src={equip.base.artUrl || '/Cards/verso.jpg'}
+                alt={equip.base.name}
                 fill
-                className={`object-cover transform-gpu ${isEnemy ? "rotate-180" : ""}`}
+                className={`object-cover ${isEnemy ? "rotate-180" : ""}`}
+                unoptimized
               />
             </div>
           ))}
+          
+          {/* Carta principal */}
           <div className="absolute inset-0 z-10 rounded-lg overflow-hidden">
             <Image
-              src={slot.card.art}
-              alt={slot.card.name}
+              src={card.base.artUrl || '/Cards/verso.jpg'}
+              alt={card.base.name}
               fill
-              className={`object-cover transform-gpu ${isEnemy ? "rotate-180" : ""}`}
+              className={`object-cover ${isEnemy ? "rotate-180" : ""}`}
+              unoptimized
             />
+            
+            {/* Stats na carta */}
+            <div className="absolute bottom-0 left-0 right-0 bg-black/70 px-1 py-0.5
+                            flex justify-between text-[10px] font-bold text-white">
+              <span className="text-red-400">⚔️{card.state.currentAttack}</span>
+              <span className="text-emerald-400">🛡️{card.state.currentLife}</span>
+            </div>
           </div>
         </>
       ) : (
-        <span className="text-gray-500 text-xs">Vazio</span>
+        <span className="text-neutral-600 text-xs">Vazio</span>
       )}
     </div>
   )
 }
 
-export default function BoardMonster({ owner, position, attackingSlot, setAttackingSlot }: BoardMonsterProps) {
-  const [selectedSlot, setSelectedSlot] = useState<any | null>(null)
+export default function BoardMonster({ 
+  owner, 
+  position, 
+  attackingSlot, 
+  setAttackingSlot 
+}: BoardMonsterProps) {
+  const [selectedSlot, setSelectedSlot] = useState<BoardSlotType | null>(null)
   const allSlots = useGameStore((state) => state.board.slots)
 
+  // Filtrar slots deste owner e posição
   const slots = allSlots
     .filter((s) => s.owner === owner && s.position === position)
     .sort((a, b) => a.lane - b.lane)
 
-  const isEnemy = owner === "CPU"
+  const isEnemy = owner === "PLAYERTWO"  // Mudou: CPU → PLAYERTWO
   const isAttackMode = !!attackingSlot
 
-  // Lógica para verificar se um slot é um alvo válido
-  const checkIsTarget = (targetSlot: any) => {
-    if (!attackingSlot) return false
-    if (!targetSlot?.card) return false // Só pode atacar slots com cartas
-    if (targetSlot.owner === attackingSlot.owner) return false // Não pode atacar aliados
+  // Verificar se um slot é alvo válido para ataque
+  const checkIsTarget = (targetSlot: BoardSlotType) => {
+    if (!attackingSlot || !targetSlot.cardInstance) return false
+    if (targetSlot.owner === attackingSlot.owner) return false
 
-    const range = (attackingSlot.card as any).range ?? 1 // Assume range 1 se não definido
-    const attackerPos = attackingSlot.position
+    const range = attackingSlot.cardInstance?.base.range ?? 1
+    const attackerPos = attackingSlot.position as string
     const targetPos = targetSlot.position
 
     if (range === 1) {
-      // Range 1: Se estiver atrás, não ataca ninguém.
       if (attackerPos === 'BACK') return false
-      // Se estiver na frente, ataca apenas a frente inimiga.
-      if (attackerPos === 'FRONT') {
-         return targetPos === 'FRONT'
-      }
+      if (attackerPos === 'FRONT') return targetPos === 'FRONT'
     } else if (range >= 2) {
-      // Range 2+: Ataca qualquer posição inimiga
-       return true
+      return true
     }
     return false
   }
 
   return (
     <>
-    <div className="flex justify-center gap-4">
-      {[1, 2, 3].map((lane) => {
-        const slot = slots.find((s) => s.lane === lane)
-        const slotId = `${owner}-${position}-${lane}`
-        const isTarget = checkIsTarget(slot)
-        const isAttacker = attackingSlot && slot && 
-          attackingSlot.owner === slot.owner && 
-          attackingSlot.position === slot.position && 
-          attackingSlot.lane === slot.lane
+      <div className="flex justify-center gap-4">
+        {slots.map((slot) => {
+          const slotId = `${owner}-${position}-${slot.lane}`
+          const isTarget = checkIsTarget(slot)
+          const isAttacker = attackingSlot && 
+            attackingSlot.owner === slot.owner && 
+            attackingSlot.position === slot.position && 
+            attackingSlot.lane === slot.lane
 
-        return (
-          <BoardSlot
-            key={slotId}
-            id={slotId}
-            slot={slot}
-            isEnemy={isEnemy}
-            isTarget={isTarget}
-            isAttackMode={isAttackMode}
-            isAttacker={!!isAttacker}
-            onClick={(clickedSlot) => {
-              if (attackingSlot) {
-                if (isTarget) {
-                  console.log(`⚔️ ${attackingSlot.card.name} atacou ${clickedSlot.card.name}!`)
+          return (
+            <BoardSlotCard
+              key={slotId}
+              slot={slot}
+              isEnemy={isEnemy}
+              isTarget={isTarget}
+              isAttackMode={isAttackMode}
+              isAttacker={!!isAttacker}
+              onClick={(clickedSlot) => {
+                if (attackingSlot && isTarget) {
+                  console.log(`⚔️ Atacou ${clickedSlot.cardInstance?.base.name}!`)
+                  setAttackingSlot?.(null)
+                } else if (clickedSlot.cardInstance) {
+                  setSelectedSlot(clickedSlot)
                 }
-                setAttackingSlot?.(null)
-              } else if (clickedSlot.card) {
-                setSelectedSlot(clickedSlot)
-              }
-            }}
-          />
-        )
-      })}
-    </div>
+              }}
+            />
+          )
+        })}
+      </div>
 
-    <CardDetailsInBoard
-      card={selectedSlot?.card}
-      isOpen={!!selectedSlot}
-      onClose={() => setSelectedSlot(null)}
-      isEnemy={isEnemy}
-      onAttack={(card) => {
-        console.log("⚔️ Preparando ataque com:", card.name)
-        // Define o slot atual como atacante
-        if (selectedSlot && setAttackingSlot) {
-          setAttackingSlot(selectedSlot)
-        }
-        setSelectedSlot(null)
-      }}
-      onActivateEffect={(card) => {
-        console.log("✨ Ativar efeito de:", card.name)
-        setSelectedSlot(null)
-      }}
-      onDiscard={(card) => {
-        console.log("🗑️ Descartar:", card.name)
-        setSelectedSlot(null)
-      }}
-    />
+      {/* Modal de detalhes da carta no board */}
+      {selectedSlot?.cardInstance && (
+        <CardDetailsInBoard
+          card={selectedSlot.cardInstance}
+          isOpen={!!selectedSlot}
+          onClose={() => setSelectedSlot(null)}
+          isEnemy={isEnemy}
+          onAttack={() => {
+            if (setAttackingSlot) {
+              setAttackingSlot(selectedSlot)
+            }
+            setSelectedSlot(null)
+          }}
+          onActivateEffect={() => {
+            console.log("✨ Ativar efeito de:", selectedSlot.cardInstance?.base.name)
+            setSelectedSlot(null)
+          }}
+          onDiscard={() => {
+            console.log("🗑️ Descartar:", selectedSlot.cardInstance?.base.name)
+            setSelectedSlot(null)
+          }}
+        />
+      )}
     </>
   )
 }

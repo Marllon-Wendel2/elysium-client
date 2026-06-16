@@ -36,7 +36,7 @@ export default function LoginPage() {
       console.log('🔑 Token salvo')
 
       // Redirecionar para o lobby
-      router.push('/lobby')
+      router.push('/play')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao fazer login')
       console.error('❌ Erro no login:', err)

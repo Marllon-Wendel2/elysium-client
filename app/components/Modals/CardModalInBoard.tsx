@@ -1,179 +1,117 @@
 'use client'
 
 import Image from "next/image"
+import type { CardInstance } from "../../types/game"
 
 interface CardModalInBoardProps {
-  card: Card | null
+  card: CardInstance | null
   isOpen: boolean
   onClose: () => void
-  onAttack?: (card: Card) => void
-  onActivateEffect?: (card: Card) => void
-  onDiscard?: (card: Card) => void
-  isEnemy?: boolean
+  isEnemy: boolean
+  onAttack?: () => void
+  onActivateEffect?: () => void
+  onDiscard?: () => void
 }
 
-export default function CardDetailsInBoard({
+export default function CardModalInBoard({
   card,
   isOpen,
   onClose,
+  isEnemy,
   onAttack,
   onActivateEffect,
   onDiscard,
-  isEnemy,
 }: CardModalInBoardProps) {
   if (!isOpen || !card) return null
 
+  const { base, state } = card
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Overlay */}
-      <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      <div className="relative z-10 flex gap-4 items-start max-h-[90vh]">
-        {/* Lista de Append (Esquerda) */}
-        {(card as any).apend && (card as any).apend.length > 0 && (
-          <div className="w-56 flex flex-col gap-2 overflow-y-auto max-h-full py-2">
-            {(card as any).apend.map((item: any, idx: number) => (
-              <div key={idx} className="flex gap-3 bg-neutral-900/90 border border-neutral-700 p-2 rounded-lg items-center shadow-lg backdrop-blur-sm">
-                <div className="relative w-10 h-14 shrink-0 rounded overflow-hidden border border-neutral-600">
-                  <Image 
-                    src={item.art} 
-                    alt={item.name} 
-                    fill 
-                    className="object-cover" 
-                  />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-xs font-bold text-white truncate">{item.name}</span>
-                  <span className="text-[10px] text-neutral-400 truncate">
-                    {item.effect?.type} {item.effect?.value && `(${item.effect.value})`}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-      {/* Modal */}
-      <div className="w-105 max-w-[95vw] rounded-2xl bg-neutral-900 border border-neutral-700 shadow-2xl p-5 overflow-y-auto max-h-full">
-
+      <div className="relative z-10 w-80 max-w-[95%] rounded-2xl bg-neutral-900 
+                      border border-neutral-700 shadow-2xl p-5">
+        
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-white">
-            {card.name}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-neutral-400 hover:text-white text-lg"
-          >
+          <h2 className="text-xl font-bold text-white">{base.name}</h2>
+          <button onClick={onClose} className="text-neutral-400 hover:text-white text-lg">
             ✕
           </button>
         </div>
 
-        {/* Arte da carta (MAIOR) */}
-        <div className="relative w-full h-132 rounded-xl overflow-hidden mb-4">
+        {/* Arte */}
+        <div className="relative w-full h-48 rounded-xl overflow-hidden mb-4">
           <Image
-            src={card.art}
-            alt={card.name}
+            src={base.artUrl || '/Cards/verso.jpg'}
+            alt={base.name}
             fill
             className="object-cover"
+            unoptimized
           />
         </div>
 
-        {/* Classe */}
-        <div className="text-sm text-neutral-300 mb-3">
-          Classe:{" "}
-          <span className="font-semibold capitalize">
-            {card.class}
-          </span>
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-2 text-sm mb-4">
+          <Stat label="Ataque" value={`${state.currentAttack} (base: ${base.attack})`} />
+          <Stat label="Vida" value={`${state.currentLife} (base: ${base.life})`} />
+          <Stat label="Energia" value={`${state.currentEnergy}/${base.energy}`} />
+          <Stat label="Alcance" value={base.range} />
         </div>
 
-        {/* Valores */}
-        <div className="grid grid-cols-2 gap-3 text-sm mb-4">
-          {card.mana !== undefined && (
-            <Stat label="Mana" value={card.mana} />
-          )}
-          {card.energy !== undefined && (
-            <Stat label="Energia" value={card.energy} />
-          )}
-          {card.attack !== undefined && (
-            <Stat label="Ataque" value={card.attack} />
-          )}
-          {card.life !== undefined && (
-            <Stat label="Vida" value={card.life} />
-          )}
-        </div>
-
-        {/* Efeito */}
-        {card.effect && (
-          <div className="bg-neutral-800 border border-neutral-700 rounded-lg p-3 text-sm text-neutral-200 mb-5">
-            <div className="font-semibold mb-1">Efeito</div>
-            <div>
-              <span className="capitalize">
-                {card.effect.type.toLowerCase()}
-              </span>{" "}
-              ({card.effect.value})
-            </div>
+        {/* Efeitos ativos */}
+        {card.status.length > 0 && (
+          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-2 mb-4">
+            <p className="text-xs text-yellow-400 font-bold mb-1">Efeitos:</p>
+            {card.status.map((s, i) => (
+              <span key={i} className="text-xs text-yellow-300">{s} </span>
+            ))}
           </div>
         )}
 
-        {/* AÇÕES */}
+        {/* Ações (só para cartas do jogador) */}
         {!isEnemy && (
-        <div className="flex gap-3">
-          <button
-            onClick={() => onAttack?.(card)}
-            className="
-              flex-1
-              bg-red-600 hover:bg-red-700
-              text-white font-bold
-              py-2 rounded-lg
-              transition
-            "
-          >
-            Atacar
-          </button>
+          <div className="flex flex-col gap-2">
+            {!state.hasAttacked && (
+              <button
+                onClick={onAttack}
+                className="w-full py-2 bg-red-600 hover:bg-red-500 text-white 
+                           font-bold rounded-lg transition-all text-sm"
+              >
+                ⚔️ Atacar
+              </button>
+            )}
+            
+            {state.currentEnergy > 0 && base.ability.length > 0 && (
+              <button
+                onClick={onActivateEffect}
+                className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white 
+                           font-bold rounded-lg transition-all text-sm"
+              >
+                ✨ Ativar Habilidade ({state.currentEnergy}⚡)
+              </button>
+            )}
 
-          <button
-            onClick={() => onActivateEffect?.(card)}
-            className="
-              flex-1
-              bg-blue-600 hover:bg-blue-700
-              text-white font-bold
-              py-2 rounded-lg
-              transition
-            "
-          >
-            Ativar
-          </button>
-
-          <button
-            onClick={() => onDiscard?.(card)}
-            className="
-              flex-1
-              bg-neutral-600 hover:bg-neutral-700
-              text-white font-bold
-              py-2 rounded-lg
-              transition
-            "
-          >
-            Descartar
-          </button>
-        </div>
+            <button
+              onClick={onDiscard}
+              className="w-full py-2 bg-neutral-700 hover:bg-red-900/50 text-neutral-400 
+                         hover:text-red-400 rounded-lg transition-all text-sm"
+            >
+              🗑️ Remover
+            </button>
+          </div>
         )}
-      </div>
       </div>
     </div>
   )
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
+function Stat({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="flex justify-between bg-neutral-800 rounded-md px-3 py-2 border border-neutral-700">
-      <span className="text-neutral-400">{label}</span>
-      <span className="font-bold text-white">{value}</span>
+      <span className="text-neutral-400 text-xs">{label}</span>
+      <span className="font-bold text-white text-xs">{value}</span>
     </div>
   )
 }
