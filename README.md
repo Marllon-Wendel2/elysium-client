@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+🎮 Elysium - Strategic Card Game Frontend
 
-## Getting Started
+Web client for Elysium, a real-time multiplayer tactical card game.
 
-First, run the development server:
+🛠️ Stack:
+Next.js 14 + React + TypeScript + PixiJS (migrating) + Zustand + TailwindCSS + Socket.IO Client
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+🎯 Features:
+- JWT Authentication
+- Room lobby (create/join)
+- Tactical slot selection (front/back lanes)
+- Interactive board with drag & drop
+- Cards with abilities, evolutions, and equipment
+- Real-time WebSocket communication
+- Responsive dark theme UI
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+🚧 In progress:
+- PixiJS board migration (WebGL rendering)
+- Attack animations and special effects
+- Complete real-time action system
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+🎮 Elysium - Frontend do jogo de cartas estratégico online
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Cliente web do Elysium, jogo de cartas multiplayer em tempo real com campo de batalha tático.
 
-## Learn More
+🛠️ Stack:
+Next.js 14 + React + TypeScript + PixiJS (em migração) + Zustand + TailwindCSS + Socket.IO Client
 
-To learn more about Next.js, take a look at the following resources:
+🎯 Features:
+- Autenticação JWT
+- Lobby com criação/entrada em salas
+- Escolha tática de slots (frente/retaguarda)
+- Board interativo com drag & drop
+- Cartas com habilidades, evoluções e equipamentos
+- Comunicação em tempo real via WebSocket
+- UI responsiva com tema dark
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+🚧 Em desenvolvimento:
+- Migração do board para PixiJS (renderização WebGL)
+- Animações de ataque e efeitos especiais
+- Sistema completo de ações em tempo real
