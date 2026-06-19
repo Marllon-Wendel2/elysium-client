@@ -76,8 +76,10 @@ export function useGameSocket() {
     // ==========================================
     // EVENTOS DO SETUP
     // ==========================================
-    socket.on('SLOT_CHOICE', () => {
-      console.log('🎯 Servidor pediu escolha de slots!')
+    socket.on('SLOT_CHOICE', (data: { side: string }) => {
+      console.log('🎯 Servidor pediu escolha de slots! Lado:', data.side)
+      const store = useGameStore.getState()
+      store.setPlayerSide(data.side as 'PLAYERONE' | 'PLAYERTWO')
       setGamePhase('SETUP')
       setIsWaiting(false)
       setWaitingOpponent(false)
@@ -163,6 +165,16 @@ export function useGameSocket() {
     socketRef.current.emit('SUBMIT_SLOTS', { front, back })
   }
 
+  const sendActions = (actions: unknown[]) => {
+    if (!socketRef.current?.connected) {
+      setError('Não está conectado ao servidor')
+      return
+    }
+
+    console.log('📤 Enviando SEND_ACTIONS:', actions)
+    socketRef.current.emit('SEND_ACTIONS', { actions })
+  }
+
   const disconnect = () => {
     if (socketRef.current) {
       console.log('🔌 Desconectando WebSocket...')
@@ -189,6 +201,7 @@ export function useGameSocket() {
     createRoom,
     joinRoom,
     submitSlots,
+    sendActions,
     isConnected,
     roomId,
     isWaiting,

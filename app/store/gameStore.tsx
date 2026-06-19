@@ -1,11 +1,13 @@
 import { create } from 'zustand'
+import { subscribeWithSelector } from 'zustand/middleware'
 import type { 
   GamePhase, 
   Winner, 
   BoardState, 
   PlayerView, 
   OpponentView,
-  GameSyncEvent 
+  GameSyncEvent,
+  PlayerOwner
 } from '../types/game'
 
 // ==========================================
@@ -30,66 +32,96 @@ interface GameStore {
   // Controles
   showInfos: boolean
   
+  // Ações pendentes
+  pendingActions: unknown[]
+  waitingForOpponent: boolean
+  
+  // Lado do jogador
+  playerSide: PlayerOwner
+  
   // Ações
   syncGameState: (event: GameSyncEvent) => void
   setShowInfos: (show: boolean) => void
+  addAction: (action: unknown) => void
+  clearPendingActions: () => void
+  setWaitingForOpponent: (waiting: boolean) => void
+  setPlayerSide: (side: PlayerOwner) => void
 }
 
 // ==========================================
 // STORE
 // ==========================================
 
-const useGameStore = create<GameStore>((set) => ({
-  // Estado inicial (vazio, será preenchido pelo GAME_SYNC)
-  phase: 'WAITING',
-  turn: 0,
-  winner: 'NONE',
-  
-  board: {
-    slots: []
-  },
-  
-  player: {
-    hand: [],
-    deckCount: 0,
-    victoryPoints: 0,
-    totalMana: 0,
-    manaAvailable: 0,
-  },
-  
-  opponent: {
-    handCount: 0,
-    deckCount: 0,
-    victoryPoints: 0,
-  },
-  
-  showInfos: false,
+const useGameStore = create<GameStore>()(
+  subscribeWithSelector((set) => ({
+    // Estado inicial (vazio, será preenchido pelo GAME_SYNC)
+    phase: 'WAITING',
+    turn: 0,
+    winner: 'NONE',
+    
+    board: {
+      slots: []
+    },
+    
+    player: {
+      hand: [],
+      deckCount: 0,
+      victoryPoints: 0,
+      totalMana: 0,
+      manaAvailable: 0,
+    },
+    
+    opponent: {
+      handCount: 0,
+      deckCount: 0,
+      victoryPoints: 0,
+    },
+    
+    showInfos: false,
 
-  // ==========================================
-  // AÇÕES
-  // ==========================================
-  
-  syncGameState: (event: GameSyncEvent) => {
-    const { state } = event
+    pendingActions: [],
+    waitingForOpponent: false,
+
+    playerSide: 'PLAYERONE',
+
+    // ==========================================
+    // AÇÕES
+    // ==========================================
     
-    console.log('📊 Atualizando gameStore...')
-    console.log('   Fase:', state.phase)
-    console.log('   Turno:', state.turn)
-    console.log('   Cartas na mão:', state.you.hand.length)
-    console.log('   Slots no board:', state.board.slots.length)
-    console.log('   Mana:', state.you.manaAvailable, '/', state.you.totalMana)
+    syncGameState: (event: GameSyncEvent) => {
+      const { state } = event
+      
+      console.log('📊 Atualizando gameStore...')
+      console.log('   Fase:', state.phase)
+      console.log('   Turno:', state.turn)
+      console.log('   Cartas na mão:', state.you.hand.length)
+      console.log('   Slots no board:', state.board.slots.length)
+      console.log('   Mana:', state.you.manaAvailable, '/', state.you.totalMana)
+      
+      set({
+        phase: state.phase,
+        turn: state.turn,
+        winner: state.winner,
+        board: state.board,
+        player: state.you,
+        opponent: state.opponent,
+        pendingActions: [],
+        waitingForOpponent: false,
+      })
+    },
     
-    set({
-      phase: state.phase,
-      turn: state.turn,
-      winner: state.winner,
-      board: state.board,
-      player: state.you,
-      opponent: state.opponent,
-    })
-  },
-  
-  setShowInfos: (show: boolean) => set({ showInfos: show }),
-}))
+    setShowInfos: (show: boolean) => set({ showInfos: show }),
+    
+    addAction: (action: unknown) => set((state) => ({
+      pendingActions: [...state.pendingActions, action],
+    })),
+    
+    clearPendingActions: () => set({ pendingActions: [] }),
+    
+    setWaitingForOpponent: (waiting: boolean) => set({ waitingForOpponent: waiting }),
+    
+    setPlayerSide: (side: PlayerOwner) => set({ playerSide: side }),
+  }))
+)
 
 export default useGameStore

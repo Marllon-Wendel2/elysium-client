@@ -1,43 +1,51 @@
-'use client'
+import { useEffect, useRef } from "react";
+import { GameRenderer, type PlayCardAction } from "./PixiRender";
 
-import { useEffect, useRef } from 'react'
-import * as PIXI from 'pixi.js'
+interface PixiGameProps {
+  onPlayCard?: (action: PlayCardAction) => void;
+}
 
-export default function PixiGame() {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const appRef = useRef<PIXI.Application | null>(null)
+export default function PixiGame({ onPlayCard }: PixiGameProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const onPlayCardRef = useRef(onPlayCard);
 
   useEffect(() => {
-    // Evitar criar múltiplas instâncias
-    if (appRef.current || !containerRef.current) return
+    onPlayCardRef.current = onPlayCard;
+  }, [onPlayCard]);
 
-    // Criar aplicação PixiJS
-    const app = new PIXI.Application({
-      width: 800,
-      height: 600,
-      backgroundColor: 0x1a1a2e,
-      antialias: true,
-      resolution: window.devicePixelRatio || 1,
-      autoDensity: true,
-    })
+  useEffect(() => {
+    if (!containerRef.current) return;
 
-    // Adicionar canvas ao container
-    containerRef.current.appendChild(app.view as HTMLCanvasElement)
-    appRef.current = app
+    let renderer: GameRenderer | null = null;
+    let cancelled = false;
 
-    // Cleanup
-    return () => {
-      if (appRef.current) {
-        appRef.current.destroy(true)
-        appRef.current = null
+    const start = async () => {
+      renderer = new GameRenderer(containerRef.current!, (action) => {
+        onPlayCardRef.current?.(action);
+      });
+
+      await renderer.initialize();
+
+      if (cancelled) {
+        renderer.destroy();
       }
-    }
-  }, [])
+    };
+
+    start();
+
+    return () => {
+      cancelled = true;
+      renderer?.destroy();
+    };
+  }, []);
 
   return (
-    <div 
-      ref={containerRef} 
-      className="w-full h-full flex items-center justify-center"
+    <div
+      ref={containerRef}
+      style={{
+        width: '100vw',
+        height: '100vh'
+      }}
     />
-  )
+  );
 }
