@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js';
-import type { BoardSlot, PlayerOwner, Position } from '@/app/types/game';
+import type { BoardSlot } from '@/app/types/board';
 import { SlotSprite, SLOT_WIDTH, SLOT_HEIGHT } from '../Sprites/SlotSprite';
 
 const SLOT_GAP = 10;

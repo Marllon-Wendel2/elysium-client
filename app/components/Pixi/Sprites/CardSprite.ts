@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js';
-import type { CardInstance } from '@/app/types/game';
+import type { CardInstance } from '@/app/types/cardInstance';
 
 const CLASS_BORDER_COLORS: Record<string, number> = {
   citizen: 0x60a5fa,

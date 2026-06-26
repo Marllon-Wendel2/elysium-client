@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js';
-import type { BoardSlot } from '@/app/types/game';
+import type { BoardSlot } from '@/app/types/board';
 import { CardSprite } from './CardSprite';
 
 export const SLOT_WIDTH = 96;

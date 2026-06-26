@@ -1,6 +1,7 @@
 import * as PIXI from 'pixi.js';
 import useGameStore from '@/app/store/gameStore';
-import type { BoardSlot, CardInstance } from '@/app/types/game';
+import type { CardInstance } from '@/app/types/cardInstance';
+import type { BoardSlot } from '@/app/types/board';
 import { BoardManager } from './Managers/BoardManager';
 import { HandManager } from './Managers/HandManager';
 import { DeckManager } from './Managers/DeckManager';

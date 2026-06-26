@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import useGameStore from '../store/gameStore'
-import type { CardInstance } from '../types/game'
+import type { CardInstance } from '../types/cardInstance'
 
 // Mapeamento de classes para cores de borda
 const CARD_BORDER_BY_CLASS: Record<string, string> = {
@@ -10,7 +10,6 @@ const CARD_BORDER_BY_CLASS: Record<string, string> = {
   army: 'border-red-500',
   mage: 'border-purple-500',
   noble: 'border-yellow-400',
-  // Classes antigas (mantendo compatibilidade)
   cidadao: 'border-blue-400',
   exercito: 'border-red-500',
   mago: 'border-purple-500',
@@ -18,11 +17,11 @@ const CARD_BORDER_BY_CLASS: Record<string, string> = {
 }
 
 interface CardProps {
-  card: CardInstance        // Mudou: Card → CardInstance
+  card: CardInstance
   index: number
   overlap: number
   showInfos: boolean
-  onSelect: (card: CardInstance) => void  // Mudou: Card → CardInstance
+  onSelect: (card: CardInstance) => void
 }
 
 export default function Card({

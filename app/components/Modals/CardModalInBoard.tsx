@@ -1,7 +1,7 @@
 'use client'
 
 import Image from "next/image"
-import type { CardInstance } from "../../types/game"
+import type { CardInstance } from "../../types/cardInstance"
 
 interface CardModalInBoardProps {
   card: CardInstance | null

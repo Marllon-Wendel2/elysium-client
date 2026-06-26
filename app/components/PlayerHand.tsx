@@ -4,7 +4,7 @@ import { useState } from "react"
 import useGameStore from "../store/gameStore"
 import Card from "./Card"
 import CardModal from "./Modals/CardDetailsInHand"
-import type { CardInstance } from '../types/game'
+import type { CardInstance } from '../types/cardInstance'
 
 const CARD_WIDTH = 96
 const MAX_WIDTH = 600

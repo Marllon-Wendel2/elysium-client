@@ -3,12 +3,12 @@ import { subscribeWithSelector } from 'zustand/middleware'
 import type { 
   GamePhase, 
   Winner, 
-  BoardState, 
-  PlayerView, 
-  OpponentView,
   GameSyncEvent,
   PlayerOwner
 } from '../types/game'
+import { BoardState } from '../types/board'
+import { PlayerView } from '../types/player'
+import { OpponentView } from '../types/ability'
 
 // ==========================================
 // INTERFACE DA STORE

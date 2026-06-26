@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js';
-import type { CardInstance } from '@/app/types/game';
+import type { CardInstance } from '@/app/types/cardInstance';
 import { CardSprite } from '../Sprites/CardSprite';
 
 const BASE_CARD_WIDTH = 100;

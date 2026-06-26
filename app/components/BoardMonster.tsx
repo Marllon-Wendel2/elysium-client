@@ -4,7 +4,7 @@ import Image from "next/image"
 import useGameStore from "../store/gameStore"
 import { useState } from "react"
 import CardDetailsInBoard from "./Modals/CardModalInBoard"
-import type { BoardSlot as BoardSlotType } from "../types/game"
+import type { BoardSlot as BoardSlotType } from "../types/board"
 
 interface BoardMonsterProps {
   owner: "PLAYERONE" | "PLAYERTWO"  // Mudou: PLAYER/CPU → PLAYERONE/PLAYERTWO
@@ -120,8 +120,8 @@ export default function BoardMonster({
 
   // Filtrar slots deste owner e posição
   const slots = allSlots
-    .filter((s) => s.owner === owner && s.position === position)
-    .sort((a, b) => a.lane - b.lane)
+    .filter((s: BoardSlotType) => s.owner === owner && s.position === position)
+    .sort((a: BoardSlotType, b: BoardSlotType) => a.lane - b.lane)
 
   const isEnemy = owner === "PLAYERTWO"  // Mudou: CPU → PLAYERTWO
   const isAttackMode = !!attackingSlot
@@ -147,7 +147,7 @@ export default function BoardMonster({
   return (
     <>
       <div className="flex justify-center gap-4">
-        {slots.map((slot) => {
+        {slots.map((slot: BoardSlotType) => {
           const slotId = `${owner}-${position}-${slot.lane}`
           const isTarget = checkIsTarget(slot)
           const isAttacker = attackingSlot && 

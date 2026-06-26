@@ -1,7 +1,8 @@
 'use client'
 
 import Image from "next/image"
-import type { CardInstance } from '../../types/game'
+import type { CardInstance } from '../../types/cardInstance'
+
 
 interface CardModalProps {
   card: CardInstance | null    // Mudou: Card → CardInstance
