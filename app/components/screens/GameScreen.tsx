@@ -2,6 +2,7 @@
 
 import useGameStore from "../../store/gameStore"
 import PixiGame from "../Pixi/PixiGame"
+import PendingActionsSidebar from "../PendingActionsSidebar"
 import type { PlayCardAction } from "../Pixi/PixiRender"
 
 interface GameScreenProps {
@@ -14,7 +15,6 @@ export default function GameScreen({ sendActions }: GameScreenProps) {
   const clearPendingActions = useGameStore((s) => s.clearPendingActions)
   const waitingForOpponent = useGameStore((s) => s.waitingForOpponent)
   const setWaitingForOpponent = useGameStore((s) => s.setWaitingForOpponent)
-  const phase = useGameStore((s) => s.phase)
 
   const handlePlayCard = (action: PlayCardAction) => {
     console.log('🃏 Adicionando ação pendente:', action)
@@ -29,38 +29,16 @@ export default function GameScreen({ sendActions }: GameScreenProps) {
     setWaitingForOpponent(true)
   }
 
-  const isDeclarationPhase = phase === 'DECLARATION' || phase === 'STANDBY'
-
   return (
     <main className="relative w-screen h-screen">
       <PixiGame onPlayCard={handlePlayCard} />
 
-      {/* Botão "Confirma jogadas" - lado esquerdo, centralizado verticalmente */}
-      {isDeclarationPhase && !waitingForOpponent && (
-        <button
-          onClick={handleConfirm}
-          disabled={pendingActions.length === 0}
-          className="fixed left-4 top-1/2 -translate-y-1/2 z-50
-            px-4 py-3 rounded-xl font-bold text-sm
-            bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700
-            text-white shadow-lg shadow-emerald-900/50
-            disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-neutral-700
-            transition-all duration-150
-            writing-mode-vertical"
-          style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
-        >
-          Confirma jogadas
-          {pendingActions.length > 0 && (
-            <span className="ml-2 text-xs bg-white/20 px-2 py-0.5 rounded-full">
-              {pendingActions.length}
-            </span>
-          )}
-        </button>
-      )}
+      {/* Sidebar de ações pendentes - lado direito */}
+      <PendingActionsSidebar onConfirm={handleConfirm} />
 
       {/* Spinner "Aguardando o adversário" - centro do board */}
       {waitingForOpponent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center pointer-events-none">
           <div className="flex flex-col items-center gap-4 bg-black/70 backdrop-blur-sm px-8 py-6 rounded-2xl">
             <div className="spinner" />
             <span className="text-white font-semibold text-lg tracking-wide">

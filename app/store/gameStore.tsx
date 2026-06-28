@@ -43,6 +43,7 @@ interface GameStore {
   syncGameState: (event: GameSyncEvent) => void
   setShowInfos: (show: boolean) => void
   addAction: (action: unknown) => void
+  removeAction: (index: number) => void
   clearPendingActions: () => void
   setWaitingForOpponent: (waiting: boolean) => void
   setPlayerSide: (side: PlayerOwner) => void
@@ -114,6 +115,10 @@ const useGameStore = create<GameStore>()(
     
     addAction: (action: unknown) => set((state) => ({
       pendingActions: [...state.pendingActions, action],
+    })),
+    
+    removeAction: (index: number) => set((state) => ({
+      pendingActions: state.pendingActions.filter((_, i) => i !== index),
     })),
     
     clearPendingActions: () => set({ pendingActions: [] }),
