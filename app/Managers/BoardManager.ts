@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js';
-import type { BoardSlot } from '@/app/types/board';
-import { SlotSprite, SLOT_WIDTH, SLOT_HEIGHT } from '../Sprites/SlotSprite';
+import type { BoardSlot, PlayerOwner } from '@/app/types/board';
+import { SlotSprite, SLOT_WIDTH, SLOT_HEIGHT } from '../components/Pixi/Sprites/SlotSprite';
 
 const SLOT_GAP = 10;
 const SIDE_GAP = 60;
@@ -18,11 +18,16 @@ export class BoardManager {
   private slotMap = new Map<string, SlotSprite>();
   private highlightGraphics: PIXI.Graphics;
   private highlightedSlot: string | null = null;
+  private playerSide: PlayerOwner = 'PLAYERONE';
 
   constructor() {
     this.container = new PIXI.Container();
     this.highlightGraphics = new PIXI.Graphics();
     this.highlightGraphics.zIndex = 999;
+  }
+
+  setPlayerSide(side: PlayerOwner) {
+    this.playerSide = side;
   }
 
   rebuild(slots: BoardSlot[], screenWidth: number, screenHeight: number) {
@@ -264,11 +269,12 @@ export class BoardManager {
   }
 
   private getRowOrder(): RowKey[] {
+    const opponent = this.playerSide === 'PLAYERONE' ? 'PLAYERTWO' : 'PLAYERONE';
     return [
-      'PLAYERTWO-BACK',
-      'PLAYERTWO-FRONT',
-      'PLAYERONE-FRONT',
-      'PLAYERONE-BACK',
+      `${opponent}-BACK`,
+      `${opponent}-FRONT`,
+      `${this.playerSide}-FRONT`,
+      `${this.playerSide}-BACK`,
     ];
   }
 

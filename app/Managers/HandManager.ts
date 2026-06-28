@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js';
 import type { CardInstance } from '@/app/types/cardInstance';
-import { CardSprite } from '../Sprites/CardSprite';
+import { CardSprite } from '../components/Pixi/Sprites/CardSprite';
 
 const BASE_CARD_WIDTH = 100;
 const BASE_CARD_HEIGHT = 150;
@@ -21,10 +21,7 @@ export interface DropEvent {
 
 export class HandManager {
   container: PIXI.Container;
-  private app: PIXI.Application | null = null;
   private cardSprites: CardSprite[] = [];
-  private dragTarget: CardSprite | null = null;
-  private dragOffset = { x: 0, y: 0 };
   private screenWidth = 0;
   private screenHeight = 0;
 
@@ -36,12 +33,11 @@ export class HandManager {
     this.container.sortableChildren = true;
   }
 
-  setApp(app: PIXI.Application) {
-    this.app = app;
+  getCardSprites(): readonly CardSprite[] {
+    return this.cardSprites;
   }
 
   rebuild(hand: CardInstance[], screenWidth: number, screenHeight: number) {
-    this.cancelDrag();
     this.clear();
     this.screenWidth = screenWidth;
     this.screenHeight = screenHeight;
@@ -53,7 +49,6 @@ export class HandManager {
     });
 
     this.positionCards();
-    this.bindDrag();
   }
 
   update(hand: CardInstance[], screenWidth: number, screenHeight: number) {
@@ -84,42 +79,15 @@ export class HandManager {
     }
   }
 
-  getDraggingCard(): CardInstance | null {
-    const t = this.dragTarget;
-    if (t) return t.card;
-    return null;
-  }
-
-  getDraggingSprite(): CardSprite | null {
-    return this.dragTarget;
-  }
-
-  private cancelDrag() {
-    if (this.dragTarget) {
-      this.endDragCleanup();
-      this.dragTarget = null;
-    }
-  }
-
-  private endDragCleanup() {
-    document.removeEventListener('pointermove', this.onDocumentMove);
-    document.removeEventListener('pointerup', this.onDocumentUp);
-  }
-
-  removeDraggingFromHand() {
-    const t = this.dragTarget;
-    if (!t) return;
-    this.endDragCleanup();
-    const idx = this.cardSprites.indexOf(t);
+  removeSprite(sprite: CardSprite) {
+    const idx = this.cardSprites.indexOf(sprite);
     if (idx !== -1) {
       this.cardSprites.splice(idx, 1);
-      this.container.removeChild(t);
+      this.container.removeChild(sprite);
     }
-    this.dragTarget = null;
   }
 
   returnCardToHand(sprite: CardSprite) {
-    this.endDragCleanup();
     if (!sprite.destroyed) {
       sprite.endDrag();
       if (sprite.parent !== this.container) {
@@ -129,7 +97,6 @@ export class HandManager {
         this.cardSprites.push(sprite);
       }
     }
-    this.dragTarget = null;
     this.positionCards();
   }
 
@@ -156,82 +123,15 @@ export class HandManager {
     });
   }
 
-  private bindDrag() {
-    for (const sprite of this.cardSprites) {
-      sprite.on('pointerdown', this.onPointerDown);
-    }
-  }
-
-  private onPointerDown = (e: PIXI.FederatedPointerEvent) => {
-    const sprite = e.currentTarget as CardSprite;
-    if (!sprite || !this.cardSprites.includes(sprite)) return;
-    if (!this.app) return;
-
-    this.dragTarget = sprite;
-
-    const canvasRect = this.app.canvas.getBoundingClientRect();
-    const mouseX = e.clientX ?? (e.global.x);
-    const mouseY = e.clientY ?? (e.global.y);
-
-    this.dragOffset.x = sprite.getGlobalPosition().x - mouseX;
-    this.dragOffset.y = sprite.getGlobalPosition().y - mouseY;
-
-    sprite.startDrag();
-    sprite.zIndex = 1000;
-
-    this.onDragStart?.({
-      card: sprite.card,
-      sprite,
-      globalPoint: new PIXI.Point(mouseX, mouseY),
-    });
-
-    document.addEventListener('pointermove', this.onDocumentMove);
-    document.addEventListener('pointerup', this.onDocumentUp);
-  };
-
-  private onDocumentMove = (e: PointerEvent) => {
-    const t = this.dragTarget;
-    if (!t || !this.app) return;
-
-    const canvasRect = this.app.canvas.getBoundingClientRect();
-    const localX = e.clientX - canvasRect.left;
-    const localY = e.clientY - canvasRect.top;
-
-    t.x = localX + this.dragOffset.x;
-    t.y = localY + this.dragOffset.y;
-  };
-
-  private onDocumentUp = (e: PointerEvent) => {
-    const t = this.dragTarget;
-    if (!t || !this.app) return;
-
-    this.endDragCleanup();
-
-    const canvasRect = this.app.canvas.getBoundingClientRect();
-    const globalPoint = new PIXI.Point(
-      e.clientX - canvasRect.left,
-      e.clientY - canvasRect.top,
-    );
-
-    this.onDragEnd?.({
-      card: t.card,
-      sprite: t,
-      globalPoint,
-    });
-  };
-
   private clear() {
     for (const sprite of this.cardSprites) {
-      sprite.off('pointerdown', this.onPointerDown);
       this.container.removeChild(sprite);
       sprite.destroy();
     }
     this.cardSprites = [];
-    this.dragTarget = null;
   }
 
   destroy() {
-    this.endDragCleanup();
     this.clear();
   }
 }

@@ -37,7 +37,7 @@ export default function PlayPage() {
 
     // Jogo rodando
     if (phase === 'DECLARATION' || phase === 'STANDBY' || phase === 'RESOLUTION') {
-      return <GameScreen />
+      return <GameScreen sendActions={game.sendActions} />
     }
 
     // Jogo finalizado

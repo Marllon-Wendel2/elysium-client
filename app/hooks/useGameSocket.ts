@@ -111,6 +111,12 @@ export function useGameSocket() {
     socket.on('ERROR', (message: string) => {
       console.error('❌ Erro do servidor:', message)
       setError(message)
+      setWaitingOpponent(false)
+    })
+
+    socket.on('ACTIONS_SENT_WAITING_OPPONENT', () => {
+      console.log('⏳ Ações enviadas, aguardando oponente...')
+      setWaitingOpponent(true)
     })
 
     socket.on('SETUP_ERROR', (message: string) => {
@@ -172,7 +178,7 @@ export function useGameSocket() {
     }
 
     console.log('📤 Enviando SEND_ACTIONS:', actions)
-    socketRef.current.emit('SEND_ACTIONS', { actions })
+    socketRef.current.emit('SEND_ACTIONS', actions)
   }
 
   const disconnect = () => {

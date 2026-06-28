@@ -1,14 +1,17 @@
 'use client'
 
 import useGameStore from "../../store/gameStore"
-import { useGameSocket } from "../../hooks/useGameSocket"
 import PixiGame from "../Pixi/PixiGame"
 import type { PlayCardAction } from "../Pixi/PixiRender"
 
-export default function GameScreen() {
-  const { sendActions } = useGameSocket()
+interface GameScreenProps {
+  sendActions: (actions: unknown[]) => void
+}
+
+export default function GameScreen({ sendActions }: GameScreenProps) {
   const addAction = useGameStore((s) => s.addAction)
   const pendingActions = useGameStore((s) => s.pendingActions)
+  const clearPendingActions = useGameStore((s) => s.clearPendingActions)
   const waitingForOpponent = useGameStore((s) => s.waitingForOpponent)
   const setWaitingForOpponent = useGameStore((s) => s.setWaitingForOpponent)
   const phase = useGameStore((s) => s.phase)
@@ -22,6 +25,7 @@ export default function GameScreen() {
     if (pendingActions.length === 0) return
     console.log('📤 Confirmando jogadas:', pendingActions)
     sendActions(pendingActions)
+    clearPendingActions()
     setWaitingForOpponent(true)
   }
 

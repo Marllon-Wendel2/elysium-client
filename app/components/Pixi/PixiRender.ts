@@ -2,11 +2,11 @@ import * as PIXI from 'pixi.js';
 import useGameStore from '@/app/store/gameStore';
 import type { CardInstance } from '@/app/types/cardInstance';
 import type { BoardSlot } from '@/app/types/board';
-import { BoardManager } from './Managers/BoardManager';
-import { HandManager } from './Managers/HandManager';
-import { DeckManager } from './Managers/DeckManager';
-import { OpponentHandManager } from './Managers/OpponentHandManager';
-import type { SlotDropTarget } from './Managers/BoardManager';
+import { BoardManager } from '../../Managers/BoardManager';
+import { HandManager } from '../../Managers/HandManager';
+import { DeckManager } from '../../Managers/DeckManager';
+import { OpponentHandManager } from '../../Managers/OpponentHandManager';
+import { InputHandler } from '../../renderer/input/InputHandler';
 
 export interface PlayCardAction {
   type: 'DOWN_CARD';
@@ -30,15 +30,15 @@ export class GameRenderer {
   private handManager: HandManager;
   private deckManager: DeckManager;
   private opponentHandManager: OpponentHandManager;
+  private inputHandler: InputHandler;
   private unsubscribers: (() => void)[] = [];
   private prevBoardSlots: BoardSlot[] = [];
   private prevHand: CardInstance[] = [];
+  private prevPlayerSide: import('@/app/types/board').PlayerOwner = 'PLAYERONE';
   private destroyed = false;
   private resizeObserver: ResizeObserver | null = null;
   private container: HTMLDivElement;
   private onPlayCard?: (action: PlayCardAction) => void;
-  private currentDropTarget: SlotDropTarget | null = null;
-  private dragCardSprite: PIXI.Container | null = null;
 
   constructor(container: HTMLDivElement, onPlayCard?: (action: PlayCardAction) => void) {
     this.container = container;
@@ -51,89 +51,10 @@ export class GameRenderer {
 
     this.app = new PIXI.Application();
 
-    this.setupDragDrop();
-  }
-
-  private setupDragDrop() {
-    this.handManager.onDragStart = ({ sprite }) => {
-      this.dragCardSprite = sprite;
-      this.boardManager.clearHighlight();
+    this.inputHandler = new InputHandler(this.boardManager, this.handManager, this.app);
+    this.inputHandler.onCardDrop = (action) => {
+      this.onPlayCard?.(action);
     };
-
-    this.handManager.onDragEnd = ({ card, sprite, globalPoint }) => {
-      const w = this.app.screen.width;
-      const h = this.app.screen.height;
-
-      const dropTarget = this.boardManager.getSlotAtGlobal(globalPoint, w, h);
-
-      if (dropTarget && this.isValidDropTarget(dropTarget, card)) {
-        this.boardManager.clearHighlight();
-        this.shakeBoard();
-
-        const action: PlayCardAction = {
-          type: 'DOWN_CARD',
-          cardInstance: card,
-          targetSlot: {
-            lane: dropTarget.slot.lane,
-            position: dropTarget.slot.position,
-            owner: dropTarget.slot.owner,
-          },
-          owner: useGameStore.getState().playerSide,
-          invoqueWay: 'NORMAL',
-        };
-
-        console.log('🃏 Play card action:', action);
-        this.onPlayCard?.(action);
-
-        this.handManager.removeDraggingFromHand();
-        sprite.destroy();
-      } else {
-        this.boardManager.clearHighlight();
-        this.handManager.returnCardToHand(sprite);
-      }
-
-      this.dragCardSprite = null;
-      this.currentDropTarget = null;
-    };
-  }
-
-  private isValidDropTarget(target: SlotDropTarget, card: CardInstance): boolean {
-    const slot = target.slot;
-
-    if (slot.owner !== useGameStore.getState().playerSide) return false;
-    if (slot.cardInstance) return false;
-
-    if (card.base.type === 'UNIT') {
-      return true;
-    }
-
-    if (card.base.type === 'SPELL' || card.base.type === 'EQUIPMENT') {
-      return slot.position === 'FRONT';
-    }
-
-    return true;
-  }
-
-  private shakeBoard() {
-    const layer = this.boardLayer;
-    const duration = 8;
-    const intensity = 6;
-    let elapsed = 0;
-    const originalX = layer.x;
-
-    const shake = () => {
-      elapsed++;
-      if (elapsed > duration) {
-        layer.x = originalX;
-        this.app.ticker.remove(shake);
-        return;
-      }
-      const progress = elapsed / duration;
-      const dampening = 1 - progress;
-      layer.x = originalX + (Math.random() * 2 - 1) * intensity * dampening;
-    };
-
-    this.app.ticker.add(shake);
   }
 
   public async initialize() {
@@ -162,8 +83,6 @@ export class GameRenderer {
     this.deckLayer.addChild(this.deckManager.container);
     this.handLayer.addChild(this.opponentHandManager.container);
 
-    this.handManager.setApp(this.app);
-
     await this.createBackground();
 
     if (this.destroyed) return;
@@ -176,20 +95,7 @@ export class GameRenderer {
   private tick = (ticker: PIXI.Ticker) => {
     const dt = ticker.deltaTime;
     this.handManager.tick(dt);
-
-    const sprite = this.handManager.getDraggingSprite();
-    if (sprite) {
-      const w = this.app.screen.width;
-      const h = this.app.screen.height;
-      const globalPos = sprite.getGlobalPosition();
-      const center = new PIXI.Point(globalPos.x + sprite.width / 2, globalPos.y + sprite.height / 2);
-      const target = this.boardManager.getSlotAtGlobal(center, w, h);
-
-      if (target !== this.currentDropTarget) {
-        this.currentDropTarget = target;
-        this.boardManager.highlightSlot(target?.slot ?? null);
-      }
-    }
+    this.inputHandler.updateHighlight();
   };
 
   private resizeCanvas() {
@@ -205,11 +111,13 @@ export class GameRenderer {
     }
 
     const state = useGameStore.getState();
+    this.boardManager.setPlayerSide(state.playerSide);
     if (state.board.slots.length > 0) {
       this.boardManager.rebuild(state.board.slots, width, height);
     }
     if (state.player.hand.length > 0) {
       this.handManager.rebuild(state.player.hand, width, height);
+      this.inputHandler.refreshBindings();
     }
     this.deckManager.update(state.player.deckCount, state.opponent.deckCount, width, height);
     this.opponentHandManager.update(state.opponent.handCount, width, height);
@@ -227,6 +135,12 @@ export class GameRenderer {
     const unsub = useGameStore.subscribe((state) => {
       const w = this.app.screen.width;
       const h = this.app.screen.height;
+
+      if (state.playerSide !== this.prevPlayerSide) {
+        this.prevPlayerSide = state.playerSide;
+        this.boardManager.setPlayerSide(state.playerSide);
+        this.boardManager.rebuild(state.board.slots, w, h);
+      }
 
       const boardChanged =
         state.board.slots !== this.prevBoardSlots &&
@@ -254,6 +168,8 @@ export class GameRenderer {
         } else {
           this.handManager.update(state.player.hand, w, h);
         }
+
+        this.inputHandler.refreshBindings();
       }
 
       this.deckManager.update(state.player.deckCount, state.opponent.deckCount, w, h);
@@ -268,6 +184,8 @@ export class GameRenderer {
     const w = this.app.screen.width;
     const h = this.app.screen.height;
 
+    this.prevPlayerSide = state.playerSide;
+    this.boardManager.setPlayerSide(state.playerSide);
     this.prevBoardSlots = state.board.slots;
     this.prevHand = state.player.hand;
 
@@ -281,13 +199,15 @@ export class GameRenderer {
 
     this.deckManager.update(state.player.deckCount, state.opponent.deckCount, w, h);
     this.opponentHandManager.update(state.opponent.handCount, w, h);
+
+    this.inputHandler.refreshBindings();
   }
 
   destroy() {
     if (this.destroyed) return;
     this.destroyed = true;
 
-    // this.app.ticker.remove(this.tick);
+    this.inputHandler.destroy();
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
 
