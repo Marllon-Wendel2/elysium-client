@@ -1,6 +1,7 @@
 import * as PIXI from 'pixi.js';
 import type { BoardSlot, PlayerOwner } from '@/app/types/board';
 import { SlotSprite, SLOT_WIDTH, SLOT_HEIGHT } from '../components/Pixi/Sprites/SlotSprite';
+import { CardSprite } from '../components/Pixi/Sprites/CardSprite';
 
 const SLOT_GAP = 10;
 const SIDE_GAP = 60;
@@ -289,6 +290,22 @@ export class BoardManager {
     }
     this.slotMap.clear();
     this.highlightGraphics.clear();
+  }
+
+  getBoardCardSprites(): { cardSprite: CardSprite; slot: BoardSlot }[] {
+    const result: { cardSprite: CardSprite; slot: BoardSlot } [] = [];
+
+    for (const sprite of this.slotMap.values()) {
+      const cardSprite = sprite.getCardSprite();
+      if (cardSprite) {
+        result.push({
+          cardSprite,
+          slot: sprite.slot,
+        });
+      }
+    }
+
+    return result;
   }
 
   destroy() {

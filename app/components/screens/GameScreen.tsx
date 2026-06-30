@@ -4,6 +4,8 @@ import useGameStore from "../../store/gameStore"
 import PixiGame from "../Pixi/PixiGame"
 import PendingActionsSidebar from "../PendingActionsSidebar"
 import type { PlayCardAction } from "../Pixi/PixiRender"
+import type { BoardSlot } from "../../types/board"
+import type { CardInstance } from "../../types/cardInstance"
 
 interface GameScreenProps {
   sendActions: (actions: unknown[]) => void
@@ -29,9 +31,14 @@ export default function GameScreen({ sendActions }: GameScreenProps) {
     setWaitingForOpponent(true)
   }
 
+  const handleBoardCardClick = (slot: BoardSlot, card: CardInstance) => {
+    console.log('ð±ï¸ Carta clicada no board:', card.base.name, '| Slot:', slot.owner, slot.position, slot.lane)
+
+  }
+
   return (
     <main className="relative w-screen h-screen">
-      <PixiGame onPlayCard={handlePlayCard} />
+      <PixiGame onPlayCard={handlePlayCard} onBoardCardClick={handleBoardCardClick} />
 
       {/* Sidebar de ações pendentes - lado direito */}
       <PendingActionsSidebar onConfirm={handleConfirm} />

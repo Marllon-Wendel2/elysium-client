@@ -39,8 +39,14 @@ export class GameRenderer {
   private resizeObserver: ResizeObserver | null = null;
   private container: HTMLDivElement;
   private onPlayCard?: (action: PlayCardAction) => void;
+  private onBoardCardClick?: (slot: BoardSlot, card: CardInstance) => void;
 
-  constructor(container: HTMLDivElement, onPlayCard?: (action: PlayCardAction) => void) {
+
+  constructor(
+    container: HTMLDivElement,
+    onPlayCard?: (action: PlayCardAction) => void,
+    onBoardCardClick?: (slot: BoardSlot, card: CardInstance) => void,
+  ) {
     this.container = container;
     this.onPlayCard = onPlayCard;
 
@@ -55,6 +61,11 @@ export class GameRenderer {
     this.inputHandler.onCardDrop = (action) => {
       this.onPlayCard?.(action);
     };
+    this.onBoardCardClick = onBoardCardClick;
+
+    this.inputHandler.onBoardCardClick = (slot, card) => {
+      this.onBoardCardClick?.(slot, card);
+    }
   }
 
   public async initialize() {

@@ -9,6 +9,7 @@ import useGameStore from '@/app/store/gameStore';
 
 export class InputHandler {
   onCardDrop?: (action: PlayCardAction) => void;
+  onBoardCardClick?: (slot: BoardSlot, card: CardInstance) => void;
 
   private boardManager: BoardManager;
   private handManager: HandManager;
@@ -30,11 +31,14 @@ export class InputHandler {
 
   refreshBindings() {
     this.unbindDrag();
+    this.unbindBoardClicks();
     this.bindDrag();
+    this.bindBoardClicks();
   }
 
   destroy() {
     this.unbindDrag();
+    this.unbindBoardClicks();
     this.endDragCleanup();
     this.dragTarget = null;
   }
@@ -167,4 +171,29 @@ export class InputHandler {
     document.removeEventListener('pointermove', this.onPointerMove);
     document.removeEventListener('pointerup', this.onPointerUp);
   }
+
+  private bindBoardClicks() {
+    for (const { cardSprite, slot } of this.boardManager.getBoardCardSprites()) {
+      cardSprite.on('pointertap', this.onBoardCardTap);
+    }
+  }
+
+  private unbindBoardClicks() {
+     for (const { cardSprite } of this.boardManager.getBoardCardSprites()) {
+      cardSprite.off('pointertap', this.onBoardCardTap);
+    }
+  }
+
+  private onBoardCardTap = (e: PIXI.FederatedPointerEvent) => {
+    const sprite = e.currentTarget as CardSprite;
+    if (!sprite) return;
+
+    for (const { cardSprite, slot } of this.boardManager.getBoardCardSprites()) {
+      if (cardSprite === sprite) {
+        this.onBoardCardClick?.(slot, sprite.card);
+        return;
+      }
+    }
+  };
+
 }

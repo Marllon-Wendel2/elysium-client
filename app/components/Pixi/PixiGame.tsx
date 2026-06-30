@@ -1,17 +1,25 @@
 import { useEffect, useRef } from "react";
 import { GameRenderer, type PlayCardAction } from "./PixiRender";
+import type { BoardSlot } from "@/app/types/board";
+import type { CardInstance } from "@/app/types/cardInstance";
 
 interface PixiGameProps {
   onPlayCard?: (action: PlayCardAction) => void;
+  onBoardCardClick?: (slot: BoardSlot, card: CardInstance) => void;
 }
 
-export default function PixiGame({ onPlayCard }: PixiGameProps) {
+export default function PixiGame({ onPlayCard, onBoardCardClick }: PixiGameProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const onPlayCardRef = useRef(onPlayCard);
+  const onBoardCardClickRef = useRef(onBoardCardClick);
 
   useEffect(() => {
     onPlayCardRef.current = onPlayCard;
   }, [onPlayCard]);
+
+  useEffect(() => {
+    onBoardCardClickRef.current = onBoardCardClick;
+  }, [onBoardCardClickRef])
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -20,9 +28,15 @@ export default function PixiGame({ onPlayCard }: PixiGameProps) {
     let cancelled = false;
 
     const start = async () => {
-      renderer = new GameRenderer(containerRef.current!, (action) => {
-        onPlayCardRef.current?.(action);
-      });
+      renderer = new GameRenderer(
+        containerRef.current!, 
+        (action) => {
+          onPlayCardRef.current?.(action);
+        },
+        (slot, card) => {
+          onBoardCardClickRef.current?.(slot, card)
+        }
+      );
 
       await renderer.initialize();
 

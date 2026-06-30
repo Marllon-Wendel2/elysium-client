@@ -61,6 +61,10 @@ export class SlotSprite extends PIXI.Container {
     return this.slotId;
   }
 
+  getCardSprite(): CardSprite | null {
+    return this.cardSprite;
+  }
+
   updateSlot(slot: BoardSlot) {
     const sameCard =
       this.slot.cardInstance?.instanceId === slot.cardInstance?.instanceId;
