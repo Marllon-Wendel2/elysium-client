@@ -6,14 +6,18 @@ import type { PlayCardAction } from '@/app/types/actions';
 import type { CardInstance } from '@/app/types/cardInstance';
 import type { BoardSlot } from '@/app/types/board';
 import useGameStore from '@/app/store/gameStore';
+import { ActionMenu, ActionMenuItem } from '@/app/components/Pixi/Sprites/ActionMenu';
 
 export class InputHandler {
   onCardDrop?: (action: PlayCardAction) => void;
-  onBoardCardClick?: (slot: BoardSlot, card: CardInstance) => void;
+  onActionPerformed?: (actionId: string, slot: BoardSlot, card: CardInstance) => void;
 
   private boardManager: BoardManager;
   private handManager: HandManager;
   private app: PIXI.Application;
+  private actionMenu: ActionMenu;
+  private currentSlot: BoardSlot | null = null;
+  private currentCard: CardInstance | null = null;
   private dragTarget: CardSprite | null = null;
   private dragOffset = { x: 0, y: 0 };
 
@@ -21,12 +25,15 @@ export class InputHandler {
     boardManager: BoardManager,
     handManager: HandManager,
     app: PIXI.Application,
+    actionMenu: ActionMenu,
   ) {
     this.boardManager = boardManager;
     this.handManager = handManager;
     this.app = app;
+    this.actionMenu = actionMenu;
 
     this.bindDrag();
+    this.app.stage.on('pointerdown', this.onStagePointerDown);
   }
 
   refreshBindings() {
@@ -40,6 +47,8 @@ export class InputHandler {
     this.unbindDrag();
     this.unbindBoardClicks();
     this.endDragCleanup();
+    this.actionMenu.hide();
+    this.app.stage.off('pointerdown', this.onStagePointerDown);
     this.dragTarget = null;
   }
 
@@ -190,9 +199,66 @@ export class InputHandler {
 
     for (const { cardSprite, slot } of this.boardManager.getBoardCardSprites()) {
       if (cardSprite === sprite) {
-        this.onBoardCardClick?.(slot, sprite.card);
-        return;
+        const actions = this.getAvailableActions(sprite.card);
+        if (actions.length === 0) return;
+
+        this.currentSlot = slot;
+        this.currentCard = sprite.card;
+
+        this.actionMenu.setActions(actions);
+        this.actionMenu.show(this.app.screen.width, this.app.screen.height);
+
+        this.actionMenu.onAction = (actionId) => {
+          this.onActionPerformed?.(actionId, this.currentSlot!, this.currentCard!);
+          this.actionMenu.hide();
+          this.currentSlot = null;
+          this.currentCard = null;
+        };
       }
+    }
+  };
+
+  private getAvailableActions(card: CardInstance): ActionMenuItem[] {
+    const actions: ActionMenuItem[] = [];
+
+    // SÃ³ pode atacar se a carta ainda nÃ£o atacou neste turno
+    if (!card.state.hasAttacked) {
+      actions.push({
+        id: 'attack',
+        iconUrl: '/Icons/atackkIcon.jpg',
+        label: 'Atacar',
+        enabled: true,
+      });
+    }
+
+    // Exemplo futuro: movimento
+    // if (canMove(card)) {
+    //   actions.push({
+    //     id: 'move',
+    //     iconUrl: '/Icons/moveIcon.jpg',
+    //     label: 'Mover',
+    //     enabled: true,
+    //   });
+    // }
+
+    // Exemplo futuro: habilidade
+    // if (card.state.currentEnergy > 0 && card.base.ability.length > 0) {
+    //   actions.push({
+    //     id: 'ability',
+    //     iconUrl: '/Icons/abilityIcon.jpg',
+    //     label: 'Habilidade',
+    //     enabled: true,
+    //   });
+    // }
+
+    return actions;
+  }
+
+  private onStagePointerDown = () => {
+    if (this.actionMenu.isOpen()) {
+      this.actionMenu.hide();
+      this.currentSlot = null;
+      this.currentCard = null;
     }
   };
 

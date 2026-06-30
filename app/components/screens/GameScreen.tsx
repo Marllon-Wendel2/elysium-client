@@ -31,14 +31,13 @@ export default function GameScreen({ sendActions }: GameScreenProps) {
     setWaitingForOpponent(true)
   }
 
-  const handleBoardCardClick = (slot: BoardSlot, card: CardInstance) => {
-    console.log('ð±ï¸ Carta clicada no board:', card.base.name, '| Slot:', slot.owner, slot.position, slot.lane)
-
+  const handleActionPerformed = (actionId: string, slot: BoardSlot, card: CardInstance) => {
+    console.log('🎯 Ação selecionada:', actionId, '| Carta:', card.base.name, '| Slot:', slot.owner, slot.position, slot.lane)
   }
 
   return (
     <main className="relative w-screen h-screen">
-      <PixiGame onPlayCard={handlePlayCard} onBoardCardClick={handleBoardCardClick} />
+      <PixiGame onPlayCard={handlePlayCard} onActionPerformed={handleActionPerformed} />
 
       {/* Sidebar de ações pendentes - lado direito */}
       <PendingActionsSidebar onConfirm={handleConfirm} />

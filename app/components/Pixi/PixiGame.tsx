@@ -5,21 +5,21 @@ import type { CardInstance } from "@/app/types/cardInstance";
 
 interface PixiGameProps {
   onPlayCard?: (action: PlayCardAction) => void;
-  onBoardCardClick?: (slot: BoardSlot, card: CardInstance) => void;
+  onActionPerformed?: (actionId: string, slot: BoardSlot, card: CardInstance) => void
 }
 
-export default function PixiGame({ onPlayCard, onBoardCardClick }: PixiGameProps) {
+export default function PixiGame({ onPlayCard, onActionPerformed }: PixiGameProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const onPlayCardRef = useRef(onPlayCard);
-  const onBoardCardClickRef = useRef(onBoardCardClick);
+  const onActionPerformedRef = useRef(onActionPerformed);
 
   useEffect(() => {
     onPlayCardRef.current = onPlayCard;
   }, [onPlayCard]);
 
   useEffect(() => {
-    onBoardCardClickRef.current = onBoardCardClick;
-  }, [onBoardCardClickRef])
+    onActionPerformedRef.current = onActionPerformed;
+  }, [onActionPerformed]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -33,8 +33,8 @@ export default function PixiGame({ onPlayCard, onBoardCardClick }: PixiGameProps
         (action) => {
           onPlayCardRef.current?.(action);
         },
-        (slot, card) => {
-          onBoardCardClickRef.current?.(slot, card)
+        (actionId, slot, card) => {
+          onActionPerformedRef.current?.(actionId, slot, card);
         }
       );
 

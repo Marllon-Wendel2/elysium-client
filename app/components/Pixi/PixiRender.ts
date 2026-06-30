@@ -7,6 +7,7 @@ import { HandManager } from '../../Managers/HandManager';
 import { DeckManager } from '../../Managers/DeckManager';
 import { OpponentHandManager } from '../../Managers/OpponentHandManager';
 import { InputHandler } from '../../renderer/input/InputHandler';
+import { ActionMenu } from './Sprites/ActionMenu';
 
 export interface PlayCardAction {
   type: 'DOWN_CARD';
@@ -31,6 +32,7 @@ export class GameRenderer {
   private deckManager: DeckManager;
   private opponentHandManager: OpponentHandManager;
   private inputHandler: InputHandler;
+  private actionMenu: ActionMenu;
   private unsubscribers: (() => void)[] = [];
   private prevBoardSlots: BoardSlot[] = [];
   private prevHand: CardInstance[] = [];
@@ -39,13 +41,14 @@ export class GameRenderer {
   private resizeObserver: ResizeObserver | null = null;
   private container: HTMLDivElement;
   private onPlayCard?: (action: PlayCardAction) => void;
-  private onBoardCardClick?: (slot: BoardSlot, card: CardInstance) => void;
+  private onActionPerformed?: (actionId: string, slot: BoardSlot, card: CardInstance) => void;
+
 
 
   constructor(
     container: HTMLDivElement,
     onPlayCard?: (action: PlayCardAction) => void,
-    onBoardCardClick?: (slot: BoardSlot, card: CardInstance) => void,
+    onActionPerformed?: (actionId: string, slot: BoardSlot, card: CardInstance) => void,
   ) {
     this.container = container;
     this.onPlayCard = onPlayCard;
@@ -54,18 +57,20 @@ export class GameRenderer {
     this.handManager = new HandManager();
     this.deckManager = new DeckManager();
     this.opponentHandManager = new OpponentHandManager();
+    this.actionMenu = new ActionMenu();
 
     this.app = new PIXI.Application();
 
-    this.inputHandler = new InputHandler(this.boardManager, this.handManager, this.app);
+    this.inputHandler = new InputHandler(this.boardManager, this.handManager, this.app, this.actionMenu);
     this.inputHandler.onCardDrop = (action) => {
       this.onPlayCard?.(action);
     };
-    this.onBoardCardClick = onBoardCardClick;
+    this.onActionPerformed = onActionPerformed;
 
-    this.inputHandler.onBoardCardClick = (slot, card) => {
-      this.onBoardCardClick?.(slot, card);
-    }
+    this.inputHandler.onActionPerformed = (actionId, slot, card) => {
+      this.onActionPerformed?.(actionId, slot, card);
+    };
+
   }
 
   public async initialize() {
@@ -93,6 +98,7 @@ export class GameRenderer {
     this.handLayer.addChild(this.handManager.container);
     this.deckLayer.addChild(this.deckManager.container);
     this.handLayer.addChild(this.opponentHandManager.container);
+    this.hudLayer.addChild(this.actionMenu.container);
 
     await this.createBackground();
 
@@ -165,6 +171,8 @@ export class GameRenderer {
         } else {
           this.boardManager.update(state.board.slots, w, h);
         }
+
+        this.inputHandler.refreshBindings();
       }
 
       const handChanged =
