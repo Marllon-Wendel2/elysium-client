@@ -24,12 +24,14 @@ export class CardSprite extends PIXI.Container {
   private cardHeight: number;
   private isHovered = false;
   private baseY = 0;
+  private baseRotation = 0;
   private borderColor: number;
   private _dragging = false;
   private _animating = false;
   private targetScaleX = 1;
   private targetScaleY = 1;
   private targetY = 0;
+  private targetRotation = 0;
 
   constructor(card: CardInstance, width: number, height: number) {
     super();
@@ -73,6 +75,7 @@ export class CardSprite extends PIXI.Container {
     if (this._dragging) return;
     this.isHovered = true;
     this.baseY = this.y;
+    this.baseRotation = this.rotation;
     this.drawGlow();
     this.computeTarget();
   };
@@ -100,6 +103,7 @@ export class CardSprite extends PIXI.Container {
     this.targetScaleX = this.isHovered ? HOVER_SCALE : 1;
     this.targetScaleY = this.isHovered ? HOVER_SCALE : 1;
     this.targetY = this.isHovered ? this.baseY + HOVER_LIFT : this.baseY;
+    this.targetRotation = this.isHovered ? 0 : this.baseRotation;
     this._animating = true;
   }
 
@@ -110,14 +114,17 @@ export class CardSprite extends PIXI.Container {
     this.scale.x += (this.targetScaleX - this.scale.x) * speed;
     this.scale.y += (this.targetScaleY - this.scale.y) * speed;
     this.y += (this.targetY - this.y) * speed;
+    this.rotation += (this.targetRotation - this.rotation) * speed;
 
     const scaleDone = Math.abs(this.scale.x - this.targetScaleX) < 0.005;
     const yDone = Math.abs(this.y - this.targetY) < 0.5;
+    const rotationDone = Math.abs(this.rotation - this.targetRotation) < 0.001;
 
-    if (scaleDone && yDone) {
+    if (scaleDone && yDone && rotationDone) {
       this.scale.x = this.targetScaleX;
       this.scale.y = this.targetScaleY;
       this.y = this.targetY;
+      this.rotation = this.targetRotation;
       this._animating = false;
     }
   }
@@ -134,6 +141,8 @@ export class CardSprite extends PIXI.Container {
     this.setDragging(true);
     this.alpha = 0.9;
     this.zIndex = 1000;
+    this.targetRotation = 0;
+    this._animating = true;
   }
 
   endDrag() {

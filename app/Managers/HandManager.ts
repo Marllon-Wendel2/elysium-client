@@ -6,6 +6,8 @@ const BASE_CARD_WIDTH = 100;
 const BASE_CARD_HEIGHT = 150;
 const MAX_HAND_RATIO = 0.55;
 const CARD_BOTTOM_MARGIN = 30;
+const ARC_HEIGHT = 20;
+const MAX_ROTATION_DEG = 5;
 
 export interface DragEvent {
   card: CardInstance;
@@ -114,12 +116,24 @@ export class HandManager {
 
     const handWidth = count * BASE_CARD_WIDTH - (count - 1) * overlap;
     const startX = (this.screenWidth - handWidth) / 2;
-    const y = this.screenHeight - BASE_CARD_HEIGHT - CARD_BOTTOM_MARGIN;
+    const baseY = this.screenHeight - BASE_CARD_HEIGHT - CARD_BOTTOM_MARGIN;
+    const maxRotationRad = (MAX_ROTATION_DEG * Math.PI) / 180;
 
     this.cardSprites.forEach((sprite, index) => {
       sprite.x = startX + index * (BASE_CARD_WIDTH - overlap);
-      sprite.y = y;
-      sprite.setBaseY(y);
+
+      let rotation = 0;
+      let arcOffset = 0;
+
+      if (count > 1) {
+        const t = (index - (count - 1) / 2) / ((count - 1) / 2);
+        rotation = maxRotationRad * t;
+        arcOffset = ARC_HEIGHT * t * t;
+      }
+
+      sprite.rotation = rotation;
+      sprite.y = baseY + arcOffset;
+      sprite.setBaseY(baseY + arcOffset);
     });
   }
 
