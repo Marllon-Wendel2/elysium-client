@@ -5,13 +5,17 @@ import type { CardInstance } from "@/app/types/cardInstance";
 
 interface PixiGameProps {
   onPlayCard?: (action: PlayCardAction) => void;
-  onActionPerformed?: (actionId: string, slot: BoardSlot, card: CardInstance) => void
+  onActionPerformed?: (actionId: string, slot: BoardSlot, card: CardInstance) => void;
+  onConfirm?: () => void;
+  onRemoveAction?: (index: number) => void;
 }
 
-export default function PixiGame({ onPlayCard, onActionPerformed }: PixiGameProps) {
+export default function PixiGame({ onPlayCard, onActionPerformed, onConfirm, onRemoveAction }: PixiGameProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const onPlayCardRef = useRef(onPlayCard);
   const onActionPerformedRef = useRef(onActionPerformed);
+  const onConfirmRef = useRef(onConfirm);
+  const onRemoveActionRef = useRef(onRemoveAction);
 
   useEffect(() => {
     onPlayCardRef.current = onPlayCard;
@@ -20,6 +24,14 @@ export default function PixiGame({ onPlayCard, onActionPerformed }: PixiGameProp
   useEffect(() => {
     onActionPerformedRef.current = onActionPerformed;
   }, [onActionPerformed]);
+
+  useEffect(() => {
+    onConfirmRef.current = onConfirm;
+  }, [onConfirm]);
+
+  useEffect(() => {
+    onRemoveActionRef.current = onRemoveAction;
+  }, [onRemoveAction]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -42,7 +54,11 @@ export default function PixiGame({ onPlayCard, onActionPerformed }: PixiGameProp
 
       if (cancelled) {
         renderer.destroy();
+        return;
       }
+
+      renderer.setOnConfirmCallback(() => onConfirmRef.current?.());
+      renderer.setOnRemoveActionCallback((index) => onRemoveActionRef.current?.(index));
     };
 
     start();

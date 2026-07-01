@@ -2,7 +2,6 @@
 
 import useGameStore from "../../store/gameStore"
 import PixiGame from "../Pixi/PixiGame"
-import PendingActionsSidebar from "../PendingActionsSidebar"
 import type { PlayCardAction } from "../Pixi/PixiRender"
 import type { BoardSlot } from "../../types/board"
 import type { CardInstance } from "../../types/cardInstance"
@@ -15,6 +14,7 @@ export default function GameScreen({ sendActions }: GameScreenProps) {
   const addAction = useGameStore((s) => s.addAction)
   const pendingActions = useGameStore((s) => s.pendingActions)
   const clearPendingActions = useGameStore((s) => s.clearPendingActions)
+  const removeAction = useGameStore((s) => s.removeAction)
   const waitingForOpponent = useGameStore((s) => s.waitingForOpponent)
   const setWaitingForOpponent = useGameStore((s) => s.setWaitingForOpponent)
 
@@ -31,16 +31,22 @@ export default function GameScreen({ sendActions }: GameScreenProps) {
     setWaitingForOpponent(true)
   }
 
+  const handleRemoveAction = (index: number) => {
+    removeAction(index)
+  }
+
   const handleActionPerformed = (actionId: string, slot: BoardSlot, card: CardInstance) => {
     console.log('🎯 Ação selecionada:', actionId, '| Carta:', card.base.name, '| Slot:', slot.owner, slot.position, slot.lane)
   }
 
   return (
     <main className="relative w-screen h-screen">
-      <PixiGame onPlayCard={handlePlayCard} onActionPerformed={handleActionPerformed} />
-
-      {/* Sidebar de ações pendentes - lado direito */}
-      <PendingActionsSidebar onConfirm={handleConfirm} />
+      <PixiGame
+        onPlayCard={handlePlayCard}
+        onActionPerformed={handleActionPerformed}
+        onConfirm={handleConfirm}
+        onRemoveAction={handleRemoveAction}
+      />
 
       {/* Spinner "Aguardando o adversário" - centro do board */}
       {waitingForOpponent && (

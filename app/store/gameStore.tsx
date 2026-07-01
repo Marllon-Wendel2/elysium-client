@@ -7,6 +7,7 @@ import type {
   PlayerOwner
 } from '../types/game'
 import { BoardState } from '../types/board'
+import type { CardInstance } from '../types/cardInstance'
 import { PlayerView } from '../types/player'
 import { OpponentView } from '../types/ability'
 
@@ -117,9 +118,18 @@ const useGameStore = create<GameStore>()(
       pendingActions: [...state.pendingActions, action],
     })),
     
-    removeAction: (index: number) => set((state) => ({
-      pendingActions: state.pendingActions.filter((_, i) => i !== index),
-    })),
+    removeAction: (index: number) => set((state) => {
+      const action = state.pendingActions[index] as { cardInstance?: CardInstance } | undefined;
+      const cardInstance = action?.cardInstance;
+      const newPending = state.pendingActions.filter((_: unknown, i: number) => i !== index);
+      const newHand = cardInstance
+        ? [...state.player.hand, cardInstance]
+        : state.player.hand;
+      return {
+        pendingActions: newPending,
+        player: { ...state.player, hand: newHand },
+      };
+    }),
     
     clearPendingActions: () => set({ pendingActions: [] }),
     

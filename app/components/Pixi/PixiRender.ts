@@ -8,6 +8,7 @@ import { DeckManager } from '../../Managers/DeckManager';
 import { OpponentHandManager } from '../../Managers/OpponentHandManager';
 import { InputHandler } from '../../renderer/input/InputHandler';
 import { ActionMenu } from './Sprites/ActionMenu';
+import { PendingActionsScroll } from './Sprites/PendingActionsScroll';
 
 export interface PlayCardAction {
   type: 'DOWN_CARD';
@@ -33,15 +34,21 @@ export class GameRenderer {
   private opponentHandManager: OpponentHandManager;
   private inputHandler: InputHandler;
   private actionMenu: ActionMenu;
+  private pendingScroll: PendingActionsScroll;
   private unsubscribers: (() => void)[] = [];
   private prevBoardSlots: BoardSlot[] = [];
   private prevHand: CardInstance[] = [];
+  private prevPendingActions: unknown[] = [];
   private prevPlayerSide: import('@/app/types/board').PlayerOwner = 'PLAYERONE';
+  private prevPhase = '';
+  private prevTurn = 0;
   private destroyed = false;
   private resizeObserver: ResizeObserver | null = null;
   private container: HTMLDivElement;
   private onPlayCard?: (action: PlayCardAction) => void;
   private onActionPerformed?: (actionId: string, slot: BoardSlot, card: CardInstance) => void;
+  private onConfirmCallback?: () => void;
+  private onRemoveActionCallback?: (index: number) => void;
 
 
 
@@ -58,6 +65,7 @@ export class GameRenderer {
     this.deckManager = new DeckManager();
     this.opponentHandManager = new OpponentHandManager();
     this.actionMenu = new ActionMenu();
+    this.pendingScroll = new PendingActionsScroll();
 
     this.app = new PIXI.Application();
 
@@ -69,6 +77,13 @@ export class GameRenderer {
 
     this.inputHandler.onActionPerformed = (actionId, slot, card) => {
       this.onActionPerformed?.(actionId, slot, card);
+    };
+
+    this.pendingScroll.onConfirm = () => {
+      this.onConfirmCallback?.();
+    };
+    this.pendingScroll.onRemoveAction = (index) => {
+      this.onRemoveActionCallback?.(index);
     };
 
   }
@@ -99,8 +114,10 @@ export class GameRenderer {
     this.deckLayer.addChild(this.deckManager.container);
     this.handLayer.addChild(this.opponentHandManager.container);
     this.hudLayer.addChild(this.actionMenu.container);
+    this.hudLayer.addChild(this.pendingScroll.container);
 
     await this.createBackground();
+    await this.pendingScroll.init();
 
     if (this.destroyed) return;
 
@@ -113,6 +130,7 @@ export class GameRenderer {
     const dt = ticker.deltaTime;
     this.handManager.tick(dt);
     this.inputHandler.updateHighlight();
+    this.pendingScroll.tick(dt);
   };
 
   private resizeCanvas() {
@@ -193,6 +211,27 @@ export class GameRenderer {
 
       this.deckManager.update(state.player.deckCount, state.opponent.deckCount, w, h);
       this.opponentHandManager.update(state.opponent.handCount, w, h);
+
+      const pendingChanged =
+        state.pendingActions !== this.prevPendingActions &&
+        JSON.stringify(state.pendingActions) !== JSON.stringify(this.prevPendingActions);
+
+      if (pendingChanged || state.phase !== this.prevPhase || state.turn !== this.prevTurn) {
+        this.prevPendingActions = state.pendingActions;
+        this.prevPhase = state.phase;
+        this.prevTurn = state.turn;
+
+        this.pendingScroll.setActions(
+          state.pendingActions,
+          state.phase,
+          state.turn,
+          state.player,
+        );
+
+        const shouldShow = state.phase === 'DECLARATION' || state.phase === 'STANDBY';
+        const hasActions = state.pendingActions.length > 0;
+        this.pendingScroll.setVisible(shouldShow && hasActions);
+      }
     });
 
     this.unsubscribers.push(unsub);
@@ -220,6 +259,19 @@ export class GameRenderer {
     this.opponentHandManager.update(state.opponent.handCount, w, h);
 
     this.inputHandler.refreshBindings();
+
+    this.pendingScroll.setActions(
+      state.pendingActions,
+      state.phase,
+      state.turn,
+      state.player,
+    );
+
+    const shouldShow = state.phase === 'DECLARATION' || state.phase === 'STANDBY';
+    const hasActions = state.pendingActions.length > 0;
+    if (shouldShow && hasActions) {
+      this.pendingScroll.showUnroll();
+    }
   }
 
   destroy() {
@@ -237,5 +289,14 @@ export class GameRenderer {
     this.handManager.destroy();
     this.deckManager.destroy();
     this.opponentHandManager.destroy();
+    this.pendingScroll.destroy();
+  }
+
+  setOnConfirmCallback(cb: () => void) {
+    this.onConfirmCallback = cb;
+  }
+
+  setOnRemoveActionCallback(cb: (index: number) => void) {
+    this.onRemoveActionCallback = cb;
   }
 }

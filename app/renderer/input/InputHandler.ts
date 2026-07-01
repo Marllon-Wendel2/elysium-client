@@ -232,14 +232,14 @@ export class InputHandler {
     }
 
     // Exemplo futuro: movimento
-    // if (canMove(card)) {
-    //   actions.push({
-    //     id: 'move',
-    //     iconUrl: '/Icons/moveIcon.jpg',
-    //     label: 'Mover',
-    //     enabled: true,
-    //   });
-    // }
+    if (this.canMove(card)) {
+      actions.push({
+        id: 'move',
+        iconUrl: '/Icons/moveIcon.jpg',
+        label: 'Mover',
+        enabled: true,
+      });
+    }
 
     // Exemplo futuro: habilidade
     // if (card.state.currentEnergy > 0 && card.base.ability.length > 0) {
@@ -253,6 +253,11 @@ export class InputHandler {
 
     return actions;
   }
+
+  private canMove(card: CardInstance): boolean {
+    return true;
+  }
+
 
   private onStagePointerDown = () => {
     if (this.actionMenu.isOpen()) {
