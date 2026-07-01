@@ -45,6 +45,9 @@ export class GameRenderer {
   private destroyed = false;
   private resizeObserver: ResizeObserver | null = null;
   private container: HTMLDivElement;
+  private topVideo: PIXI.Sprite | null = null;
+  private bottomVideo: PIXI.Sprite | null = null;
+  private videoElement: HTMLVideoElement | null = null;
   private onPlayCard?: (action: PlayCardAction) => void;
   private onActionPerformed?: (actionId: string, slot: BoardSlot, card: CardInstance) => void;
   private onConfirmCallback?: () => void;
@@ -139,10 +142,15 @@ export class GameRenderer {
 
     this.app.renderer.resize(width, height);
 
-    const bg = this.backgroundLayer.children[0] as PIXI.Sprite | undefined;
-    if (bg) {
-      bg.width = width;
-      bg.height = height;
+    if (this.topVideo && this.bottomVideo) {
+      const halfH = height / 2;
+      this.topVideo.width = width;
+      this.topVideo.height = halfH;
+      this.topVideo.scale.y = -1;
+      this.topVideo.y = halfH;
+      this.bottomVideo.width = width;
+      this.bottomVideo.height = halfH;
+      this.bottomVideo.y = halfH;
     }
 
     const state = useGameStore.getState();
@@ -159,11 +167,35 @@ export class GameRenderer {
   }
 
   private async createBackground() {
-    const texture = await PIXI.Assets.load('/Cards/bord.jpg');
-    const bg = new PIXI.Sprite(texture);
-    bg.width = this.app.screen.width;
-    bg.height = this.app.screen.height;
-    this.backgroundLayer.addChild(bg);
+    const video = document.createElement('video');
+    video.src = '/Boards/BoardAnimation.mp4';
+    video.autoplay = true;
+    video.loop = true;
+    video.muted = true;
+    video.playsInline = true;
+    await video.play().catch(() => {});
+    this.videoElement = video;
+
+    const source = new PIXI.VideoSource({ resource: video });
+    const texture = new PIXI.Texture({ source });
+
+    const w = this.app.screen.width;
+    const h = this.app.screen.height;
+    const halfH = h / 2;
+
+    this.bottomVideo = new PIXI.Sprite(texture);
+    this.bottomVideo.width = w;
+    this.bottomVideo.height = halfH;
+    this.bottomVideo.y = halfH;
+
+    this.topVideo = new PIXI.Sprite(texture);
+    this.topVideo.width = w;
+    this.topVideo.height = halfH;
+    this.topVideo.scale.y = -1;
+    this.topVideo.y = halfH;
+
+    this.backgroundLayer.addChild(this.topVideo);
+    this.backgroundLayer.addChild(this.bottomVideo);
   }
 
   private subscribeToStore() {
@@ -277,6 +309,15 @@ export class GameRenderer {
   destroy() {
     if (this.destroyed) return;
     this.destroyed = true;
+
+    if (this.videoElement) {
+      this.videoElement.pause();
+      this.videoElement.src = '';
+      this.videoElement.load();
+      this.videoElement = null;
+    }
+    this.topVideo = null;
+    this.bottomVideo = null;
 
     this.inputHandler.destroy();
     this.resizeObserver?.disconnect();
