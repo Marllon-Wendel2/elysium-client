@@ -2,8 +2,8 @@ import * as PIXI from 'pixi.js';
 import type { PlayCardAction } from '../PixiRender';
 import type { PlayerView } from '@/app/types/player';
 
-const SCROLL_WIDTH = 280;
-const SCROLL_HEIGHT = 520;
+const SCROLL_WIDTH = 360;
+const SCROLL_HEIGHT = 640;
 const SCROLL_PADDING = 30;
 const ITEM_HEIGHT = 72;
 const ITEM_GAP = 8;

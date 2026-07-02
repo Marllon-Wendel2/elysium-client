@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js';
 
-const CARD_WIDTH = 80;
-const CARD_HEIGHT = 112;
+const CARD_WIDTH = 100;
+const CARD_HEIGHT = 150;
 const CARD_TOP_MARGIN = 30;
 const MAX_HAND_RATIO = 0.55;
 
