@@ -42,6 +42,7 @@ function BoardSlotCard({
 }) {
   const card = slot.cardInstance
   const isDimmed = isAttackMode && card && !isTarget && !isAttacker
+  const hasProtect = card?.status.includes('protect')
 
   const borderColor = card
     ? (CARD_BORDER_BY_CLASS[card.base.class] ?? "border-neutral-400")
@@ -93,6 +94,11 @@ function BoardSlotCard({
               className={`object-cover ${isEnemy ? "rotate-180" : ""}`}
               unoptimized
             />
+            
+            {/* Overlay protect */}
+            {hasProtect && (
+              <div className="absolute inset-0 rounded-lg bg-yellow-400/25 pointer-events-none" />
+            )}
             
             {/* Stats na carta */}
             <div className="absolute bottom-0 left-0 right-0 bg-black/70 px-1 py-0.5

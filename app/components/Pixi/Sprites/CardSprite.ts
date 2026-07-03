@@ -14,12 +14,15 @@ const HOVER_SCALE = 1.15;
 const HOVER_LIFT = -20;
 const HOVER_GLOW_COLOR = 0xfbbf24;
 
+const PROTECT_COLOR = 0xfacc15;
+
 export class CardSprite extends PIXI.Container {
   card: CardInstance;
   private artSprite: PIXI.Sprite | null = null;
   private bg: PIXI.Graphics;
   private statsContainer: PIXI.Container;
   private glowGraphics: PIXI.Graphics;
+  private protectOverlay: PIXI.Graphics;
   private cardWidth: number;
   private cardHeight: number;
   private isHovered = false;
@@ -46,6 +49,9 @@ export class CardSprite extends PIXI.Container {
 
     this.glowGraphics = new PIXI.Graphics();
     this.addChild(this.glowGraphics);
+
+    this.protectOverlay = new PIXI.Graphics();
+    this.addChild(this.protectOverlay);
 
     this.statsContainer = new PIXI.Container();
     this.addChild(this.statsContainer);
@@ -97,6 +103,21 @@ export class CardSprite extends PIXI.Container {
 
   private clearGlow() {
     this.glowGraphics.clear();
+  }
+
+  private drawProtect() {
+    if (!this.card.status.includes('protect')) {
+      this.clearProtect();
+      return;
+    }
+    this.protectOverlay.clear();
+    this.protectOverlay
+      .roundRect(0, 0, this.cardWidth, this.cardHeight, 8)
+      .fill({ color: PROTECT_COLOR, alpha: 0.25 });
+  }
+
+  private clearProtect() {
+    this.protectOverlay.clear();
   }
 
   private computeTarget() {
@@ -177,6 +198,7 @@ export class CardSprite extends PIXI.Container {
     }
 
     this.buildStats(width, height);
+    this.drawProtect();
   }
 
   private buildStats(width: number, height: number) {
@@ -216,5 +238,7 @@ export class CardSprite extends PIXI.Container {
 
     if (attackText) attackText.text = `⚔${card.state.currentAttack}`;
     if (lifeText) lifeText.text = `♥${card.state.currentLife}`;
+
+    this.drawProtect();
   }
 }
