@@ -3,7 +3,7 @@ import type { PlayCardAction } from '../PixiRender';
 import type { PlayerView } from '@/app/types/player';
 
 const SCROLL_WIDTH = 360;
-const SCROLL_HEIGHT = 640;
+const SCROLL_HEIGHT = 840;
 const SCROLL_PADDING = 30;
 const ITEM_HEIGHT = 72;
 const ITEM_GAP = 8;
@@ -48,7 +48,9 @@ interface ActionItem {
 
 export class PendingActionsScroll {
   container: PIXI.Container;
+  passContainer: PIXI.Container;
   onConfirm?: () => void;
+  onPass?: () => void;
   onRemoveAction?: (index: number) => void;
 
   private parchmentSprite: PIXI.Sprite | null = null;
@@ -63,6 +65,8 @@ export class PendingActionsScroll {
   private confirmBtnLabel: PIXI.Text;
   private confirmBtnCheck: PIXI.Text;
   private clearBtn: PIXI.Text;
+  private passBtn: PIXI.Container;
+  private passBtnSprite: PIXI.Sprite | null = null;
   private emptyText: PIXI.Text;
   private emptyIcon: PIXI.Text;
 
@@ -75,7 +79,7 @@ export class PendingActionsScroll {
   private currentPlayer: PlayerView | null = null;
   private isAnimating = false;
   private isContentVisible = false;
-  private maskMaxHeight = SCROLL_HEIGHT - 60;
+  private maskMaxHeight = SCROLL_HEIGHT - 220;
 
   constructor() {
     this.container = new PIXI.Container();
@@ -83,6 +87,10 @@ export class PendingActionsScroll {
     this.container.y = POSITION_Y;
     this.container.zIndex = 1500;
     this.container.sortableChildren = true;
+
+    this.passContainer = new PIXI.Container();
+    this.passContainer.x = POSITION_X;
+    this.passContainer.zIndex = 1500;
 
     this.maskGraphics = new PIXI.Graphics();
     this.maskGraphics.zIndex = 1;
@@ -103,7 +111,7 @@ export class PendingActionsScroll {
       },
     });
     this.headerText.x = SCROLL_PADDING;
-    this.headerText.y = 28;
+    this.headerText.y = 100;
     this.contentContainer.addChild(this.headerText);
 
     this.countBadge = new PIXI.Text({
@@ -127,16 +135,16 @@ export class PendingActionsScroll {
       },
     });
     this.infoBar.x = SCROLL_PADDING;
-    this.infoBar.y = 50;
+    this.infoBar.y = 122;
     this.contentContainer.addChild(this.infoBar);
 
     const dividerLine = new PIXI.Graphics();
-    dividerLine.rect(SCROLL_PADDING, 66, SCROLL_WIDTH - SCROLL_PADDING * 2, 1)
+    dividerLine.rect(SCROLL_PADDING, 138, SCROLL_WIDTH - SCROLL_PADDING * 2, 1)
       .fill({ color: 0xc4a882, alpha: 0.5 });
     this.contentContainer.addChild(dividerLine);
 
     this.actionsContainer = new PIXI.Container();
-    this.actionsContainer.y = 76;
+    this.actionsContainer.y = 148;
     this.contentContainer.addChild(this.actionsContainer);
 
     this.emptyIcon = new PIXI.Text({
@@ -145,7 +153,7 @@ export class PendingActionsScroll {
     });
     this.emptyIcon.anchor.set(0.5);
     this.emptyIcon.x = SCROLL_WIDTH / 2;
-    this.emptyIcon.y = 160;
+    this.emptyIcon.y = 340;
     this.emptyIcon.alpha = 0.4;
     this.contentContainer.addChild(this.emptyIcon);
 
@@ -160,11 +168,11 @@ export class PendingActionsScroll {
     });
     this.emptyText.anchor.set(0.5);
     this.emptyText.x = SCROLL_WIDTH / 2;
-    this.emptyText.y = 200;
+    this.emptyText.y = 380;
     this.contentContainer.addChild(this.emptyText);
 
     this.confirmBtn = new PIXI.Container();
-    this.confirmBtn.y = SCROLL_HEIGHT - 80;
+    this.confirmBtn.y = SCROLL_HEIGHT - 180;
     this.confirmBtn.eventMode = 'static';
     this.confirmBtn.cursor = 'pointer';
     this.confirmBtn.zIndex = 10;
@@ -210,7 +218,7 @@ export class PendingActionsScroll {
     });
     this.clearBtn.anchor.set(0.5, 0);
     this.clearBtn.x = SCROLL_WIDTH / 2;
-    this.clearBtn.y = SCROLL_HEIGHT - 42;
+    this.clearBtn.y = SCROLL_HEIGHT - 130;
     this.clearBtn.eventMode = 'static';
     this.clearBtn.cursor = 'pointer';
     this.clearBtn.zIndex = 10;
@@ -225,35 +233,45 @@ export class PendingActionsScroll {
     });
     this.container.addChild(this.clearBtn);
 
+    this.passBtn = new PIXI.Container();
+    this.passBtn.eventMode = 'static';
+    this.passBtn.cursor = 'pointer';
+    this.passBtn.visible = false;
+    this.passContainer.addChild(this.passBtn);
+
+    this.passBtn.on('pointertap', () => this.onPass?.());
+    this.passBtn.on('pointerover', () => {
+      if (this.passBtnSprite) this.passBtnSprite.alpha = 0.7;
+    });
+    this.passBtn.on('pointerout', () => {
+      if (this.passBtnSprite) this.passBtnSprite.alpha = 1;
+    });
+
     this.container.visible = false;
-    this.drawParchment();
     this.drawConfirmButton(false);
   }
 
   async init() {
     try {
-      const texture = await PIXI.Assets.load('/assets/pergaminho.png');
-      this.parchmentSprite = new PIXI.Sprite(texture);
+      const [parchmentTexture, arrowTexture] = await Promise.all([
+        PIXI.Assets.load('/assets/pergaminho.png'),
+        PIXI.Assets.load('/assets/seta-para-a-direita.svg'),
+      ]);
+
+      this.parchmentSprite = new PIXI.Sprite(parchmentTexture);
       this.parchmentSprite.width = SCROLL_WIDTH;
       this.parchmentSprite.height = SCROLL_HEIGHT;
       this.parchmentSprite.zIndex = 0;
       this.container.addChildAt(this.parchmentSprite, 0);
+
+      this.passBtnSprite = new PIXI.Sprite(arrowTexture);
+      this.passBtnSprite.anchor.set(0.5);
+      this.passBtnSprite.width = 40;
+      this.passBtnSprite.height = 40;
+      this.passBtn.addChild(this.passBtnSprite);
     } catch {
-      this.drawFallbackParchment();
+      // fallback: sem pergaminho
     }
-  }
-
-  private drawParchment() {
-    const fallback = new PIXI.Graphics();
-    fallback.roundRect(0, 0, SCROLL_WIDTH, SCROLL_HEIGHT, 12)
-      .fill({ color: 0xf5deb3, alpha: 0.92 });
-    fallback.zIndex = 0;
-    this.container.addChildAt(fallback, 0);
-  }
-
-  private drawFallbackParchment() {
-    const g = this.container.children[0] as PIXI.Graphics;
-    if (g) g.visible = true;
   }
 
   setActions(actions: unknown[], phase: string, turn: number, player: PlayerView) {
@@ -483,7 +501,7 @@ export class PendingActionsScroll {
     const count = this.actions.length;
     this.countBadge.text = String(count);
     this.countBadge.x = SCROLL_WIDTH - SCROLL_PADDING - 10;
-    this.countBadge.y = 34;
+    this.countBadge.y = 106;
 
     if (count > 0) {
       const badgeBg = new PIXI.Graphics();
@@ -499,6 +517,9 @@ export class PendingActionsScroll {
     this.drawConfirmButton(hasActions, hover);
     this.confirmBtn.eventMode = hasActions ? 'static' : 'none';
     this.confirmBtn.cursor = hasActions ? 'pointer' : 'default';
+    this.passBtn.visible = !hasActions;
+    this.passBtn.eventMode = hasActions ? 'none' : 'static';
+    this.passBtn.cursor = hasActions ? 'default' : 'pointer';
   }
 
   private drawConfirmButton(hasActions: boolean, hover: boolean) {

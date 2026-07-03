@@ -7,14 +7,16 @@ interface PixiGameProps {
   onPlayCard?: (action: PlayCardAction) => void;
   onActionPerformed?: (actionId: string, slot: BoardSlot, card: CardInstance) => void;
   onConfirm?: () => void;
+  onPass?: () => void;
   onRemoveAction?: (index: number) => void;
 }
 
-export default function PixiGame({ onPlayCard, onActionPerformed, onConfirm, onRemoveAction }: PixiGameProps) {
+export default function PixiGame({ onPlayCard, onActionPerformed, onConfirm, onPass, onRemoveAction }: PixiGameProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const onPlayCardRef = useRef(onPlayCard);
   const onActionPerformedRef = useRef(onActionPerformed);
   const onConfirmRef = useRef(onConfirm);
+  const onPassRef = useRef(onPass);
   const onRemoveActionRef = useRef(onRemoveAction);
 
   useEffect(() => {
@@ -28,6 +30,10 @@ export default function PixiGame({ onPlayCard, onActionPerformed, onConfirm, onR
   useEffect(() => {
     onConfirmRef.current = onConfirm;
   }, [onConfirm]);
+
+  useEffect(() => {
+    onPassRef.current = onPass;
+  }, [onPass]);
 
   useEffect(() => {
     onRemoveActionRef.current = onRemoveAction;
@@ -58,6 +64,7 @@ export default function PixiGame({ onPlayCard, onActionPerformed, onConfirm, onR
       }
 
       renderer.setOnConfirmCallback(() => onConfirmRef.current?.());
+      renderer.setOnPassCallback(() => onPassRef.current?.());
       renderer.setOnRemoveActionCallback((index) => onRemoveActionRef.current?.(index));
     };
 

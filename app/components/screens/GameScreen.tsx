@@ -35,6 +35,13 @@ export default function GameScreen({ sendActions }: GameScreenProps) {
     removeAction(index)
   }
 
+  const handlePass = () => {
+    console.log('⏭ Passando a vez sem ações')
+    sendActions([])
+    clearPendingActions()
+    setWaitingForOpponent(true)
+  }
+
   const handleActionPerformed = (actionId: string, slot: BoardSlot, card: CardInstance) => {
     console.log('🎯 Ação selecionada:', actionId, '| Carta:', card.base.name, '| Slot:', slot.owner, slot.position, slot.lane)
   }
@@ -45,6 +52,7 @@ export default function GameScreen({ sendActions }: GameScreenProps) {
         onPlayCard={handlePlayCard}
         onActionPerformed={handleActionPerformed}
         onConfirm={handleConfirm}
+        onPass={handlePass}
         onRemoveAction={handleRemoveAction}
       />
 

@@ -51,6 +51,7 @@ export class GameRenderer {
   private onPlayCard?: (action: PlayCardAction) => void;
   private onActionPerformed?: (actionId: string, slot: BoardSlot, card: CardInstance) => void;
   private onConfirmCallback?: () => void;
+  private onPassCallback?: () => void;
   private onRemoveActionCallback?: (index: number) => void;
 
 
@@ -85,6 +86,9 @@ export class GameRenderer {
     this.pendingScroll.onConfirm = () => {
       this.onConfirmCallback?.();
     };
+    this.pendingScroll.onPass = () => {
+      this.onPassCallback?.();
+    };
     this.pendingScroll.onRemoveAction = (index) => {
       this.onRemoveActionCallback?.(index);
     };
@@ -118,6 +122,7 @@ export class GameRenderer {
     this.handLayer.addChild(this.opponentHandManager.container);
     this.hudLayer.addChild(this.actionMenu.container);
     this.hudLayer.addChild(this.pendingScroll.container);
+    this.hudLayer.addChild(this.pendingScroll.passContainer);
 
     await this.createBackground();
     await this.pendingScroll.init();
@@ -152,6 +157,9 @@ export class GameRenderer {
       this.bottomVideo.height = halfH;
       this.bottomVideo.y = halfH;
     }
+
+    this.pendingScroll.passContainer.x = width / 2;
+    this.pendingScroll.passContainer.y = height - 280;
 
     const state = useGameStore.getState();
     this.boardManager.setPlayerSide(state.playerSide);
@@ -263,6 +271,7 @@ export class GameRenderer {
         const shouldShow = state.phase === 'DECLARATION' || state.phase === 'STANDBY';
         const hasActions = state.pendingActions.length > 0;
         this.pendingScroll.setVisible(shouldShow && hasActions);
+        this.pendingScroll.passContainer.visible = shouldShow;
       }
     });
 
@@ -304,6 +313,7 @@ export class GameRenderer {
     if (shouldShow && hasActions) {
       this.pendingScroll.showUnroll();
     }
+    this.pendingScroll.passContainer.visible = shouldShow;
   }
 
   destroy() {
@@ -335,6 +345,10 @@ export class GameRenderer {
 
   setOnConfirmCallback(cb: () => void) {
     this.onConfirmCallback = cb;
+  }
+
+  setOnPassCallback(cb: () => void) {
+    this.onPassCallback = cb;
   }
 
   setOnRemoveActionCallback(cb: (index: number) => void) {
