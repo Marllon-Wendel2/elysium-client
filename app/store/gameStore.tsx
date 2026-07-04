@@ -1,12 +1,15 @@
 import { create } from 'zustand'
+import { subscribeWithSelector } from 'zustand/middleware'
 import type { 
   GamePhase, 
   Winner, 
-  BoardState, 
-  PlayerView, 
-  OpponentView,
-  GameSyncEvent 
+  GameSyncEvent,
+  PlayerOwner
 } from '../types/game'
+import { BoardState } from '../types/board'
+import type { CardInstance } from '../types/cardInstance'
+import { PlayerView } from '../types/player'
+import { OpponentView } from '../types/ability'
 
 // ==========================================
 // INTERFACE DA STORE
@@ -30,66 +33,127 @@ interface GameStore {
   // Controles
   showInfos: boolean
   
+  // Ações pendentes
+  pendingActions: unknown[]
+  waitingForOpponent: boolean
+  
+  // Lado do jogador
+  playerSide: PlayerOwner
+  
+  // Hand snapshot do último sync do servidor
+  handSnapshot: CardInstance[]
+  
   // Ações
   syncGameState: (event: GameSyncEvent) => void
   setShowInfos: (show: boolean) => void
+  addAction: (action: unknown) => void
+  removeAction: (index: number) => void
+  clearPendingActions: () => void
+  setWaitingForOpponent: (waiting: boolean) => void
+  setPlayerSide: (side: PlayerOwner) => void
 }
 
 // ==========================================
 // STORE
 // ==========================================
 
-const useGameStore = create<GameStore>((set) => ({
-  // Estado inicial (vazio, será preenchido pelo GAME_SYNC)
-  phase: 'WAITING',
-  turn: 0,
-  winner: 'NONE',
-  
-  board: {
-    slots: []
-  },
-  
-  player: {
-    hand: [],
-    deckCount: 0,
-    victoryPoints: 0,
-    totalMana: 0,
-    manaAvailable: 0,
-  },
-  
-  opponent: {
-    handCount: 0,
-    deckCount: 0,
-    victoryPoints: 0,
-  },
-  
-  showInfos: false,
+const useGameStore = create<GameStore>()(
+  subscribeWithSelector((set) => ({
+    // Estado inicial (vazio, será preenchido pelo GAME_SYNC)
+    phase: 'WAITING',
+    turn: 0,
+    winner: 'NONE',
+    
+    board: {
+      slots: []
+    },
+    
+    player: {
+      hand: [],
+      deckCount: 0,
+      victoryPoints: 0,
+      totalMana: 0,
+      manaAvailable: 0,
+    },
+    
+    opponent: {
+      handCount: 0,
+      deckCount: 0,
+      victoryPoints: 0,
+    },
+    
+    showInfos: false,
 
-  // ==========================================
-  // AÇÕES
-  // ==========================================
-  
-  syncGameState: (event: GameSyncEvent) => {
-    const { state } = event
+    pendingActions: [],
+    waitingForOpponent: false,
+
+    playerSide: 'PLAYERONE',
+
+    handSnapshot: [],
+
+    // ==========================================
+    // AÇÕES
+    // ==========================================
     
-    console.log('📊 Atualizando gameStore...')
-    console.log('   Fase:', state.phase)
-    console.log('   Turno:', state.turn)
-    console.log('   Cartas na mão:', state.you.hand.length)
-    console.log('   Slots no board:', state.board.slots.length)
-    console.log('   Mana:', state.you.manaAvailable, '/', state.you.totalMana)
+    syncGameState: (event: GameSyncEvent) => {
+      const { state } = event
+      
+      console.log('📊 Atualizando gameStore...')
+      console.log('   Fase:', state.phase)
+      console.log('   Turno:', state.turn)
+      console.log('   Cartas na mão:', state.you.hand.length)
+      console.log('   Slots no board:', state.board.slots.length)
+      console.log('   Mana:', state.you.manaAvailable, '/', state.you.totalMana)
+      
+      set({
+        phase: state.phase,
+        turn: state.turn,
+        winner: state.winner,
+        board: state.board,
+        player: state.you,
+        opponent: state.opponent,
+        pendingActions: [],
+        waitingForOpponent: false,
+        handSnapshot: [...state.you.hand],
+      })
+    },
     
-    set({
-      phase: state.phase,
-      turn: state.turn,
-      winner: state.winner,
-      board: state.board,
-      player: state.you,
-      opponent: state.opponent,
-    })
-  },
-  
-  setShowInfos: (show: boolean) => set({ showInfos: show }),
-}))
+    setShowInfos: (show: boolean) => set({ showInfos: show }),
+    
+    addAction: (action: unknown) => set((state) => ({
+      pendingActions: [...state.pendingActions, action],
+    })),
+    
+    removeAction: (index: number) => set((state) => {
+      const newPending = state.pendingActions.filter((_: unknown, i: number) => i !== index);
+
+      const pendingCardIds = new Set<string>();
+      for (const action of newPending) {
+        const pa = action as { cardInstance?: CardInstance };
+        if (pa.cardInstance) {
+          pendingCardIds.add(pa.cardInstance.instanceId);
+        }
+      }
+
+      const newHand = state.handSnapshot.filter(
+        (c) => !pendingCardIds.has(c.instanceId)
+      );
+
+      return {
+        pendingActions: newPending,
+        player: { ...state.player, hand: newHand },
+      };
+    }),
+    
+    clearPendingActions: () => set((state) => ({
+      pendingActions: [],
+      player: { ...state.player, hand: [...state.handSnapshot] },
+    })),
+    
+    setWaitingForOpponent: (waiting: boolean) => set({ waitingForOpponent: waiting }),
+    
+    setPlayerSide: (side: PlayerOwner) => set({ playerSide: side }),
+  }))
+)
 
 export default useGameStore
