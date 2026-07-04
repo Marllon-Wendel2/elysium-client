@@ -40,6 +40,9 @@ interface GameStore {
   // Lado do jogador
   playerSide: PlayerOwner
   
+  // Hand snapshot do último sync do servidor
+  handSnapshot: CardInstance[]
+  
   // Ações
   syncGameState: (event: GameSyncEvent) => void
   setShowInfos: (show: boolean) => void
@@ -86,6 +89,8 @@ const useGameStore = create<GameStore>()(
 
     playerSide: 'PLAYERONE',
 
+    handSnapshot: [],
+
     // ==========================================
     // AÇÕES
     // ==========================================
@@ -109,6 +114,7 @@ const useGameStore = create<GameStore>()(
         opponent: state.opponent,
         pendingActions: [],
         waitingForOpponent: false,
+        handSnapshot: [...state.you.hand],
       })
     },
     
@@ -119,19 +125,30 @@ const useGameStore = create<GameStore>()(
     })),
     
     removeAction: (index: number) => set((state) => {
-      const action = state.pendingActions[index] as { cardInstance?: CardInstance } | undefined;
-      const cardInstance = action?.cardInstance;
       const newPending = state.pendingActions.filter((_: unknown, i: number) => i !== index);
-      const newHand = cardInstance
-        ? [...state.player.hand, cardInstance]
-        : state.player.hand;
+
+      const pendingCardIds = new Set<string>();
+      for (const action of newPending) {
+        const pa = action as { cardInstance?: CardInstance };
+        if (pa.cardInstance) {
+          pendingCardIds.add(pa.cardInstance.instanceId);
+        }
+      }
+
+      const newHand = state.handSnapshot.filter(
+        (c) => !pendingCardIds.has(c.instanceId)
+      );
+
       return {
         pendingActions: newPending,
         player: { ...state.player, hand: newHand },
       };
     }),
     
-    clearPendingActions: () => set({ pendingActions: [] }),
+    clearPendingActions: () => set((state) => ({
+      pendingActions: [],
+      player: { ...state.player, hand: [...state.handSnapshot] },
+    })),
     
     setWaitingForOpponent: (waiting: boolean) => set({ waitingForOpponent: waiting }),
     

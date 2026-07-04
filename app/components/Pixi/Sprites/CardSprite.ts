@@ -1,6 +1,7 @@
 import * as PIXI from 'pixi.js';
 import type { CardInstance } from '@/app/types/cardInstance';
 import { getSharedTooltip } from './CardTooltip';
+import { CardAnimator } from '../../../renderer/animations/animators/CardAnimator';
 
 const CLASS_BORDER_COLORS: Record<string, number> = {
   citizen: 0x60a5fa,
@@ -18,8 +19,8 @@ const RARITY_FRAME_MAP: Record<string, string> = {
   legendary: '/Board/realeza.png',
 };
 
-const HOVER_SCALE = 1.15;
-const HOVER_LIFT = -20;
+// const HOVER_SCALE = 1.15;
+// const HOVER_LIFT = -20;
 const HOVER_GLOW_COLOR = 0xfbbf24;
 
 const PROTECT_COLOR = 0xfacc15;
@@ -32,18 +33,14 @@ export class CardSprite extends PIXI.Container {
   private statsContainer: PIXI.Container;
   private glowGraphics: PIXI.Graphics;
   private protectOverlay: PIXI.Graphics;
+  private animator: CardAnimator | null = null;
   private cardWidth: number;
   private cardHeight: number;
-  private isHovered = false;
+  isHovered = false;
   private baseY = 0;
   private baseRotation = 0;
   private borderColor: number;
   private _dragging = false;
-  private _animating = false;
-  private targetScaleX = 1;
-  private targetScaleY = 1;
-  private targetY = 0;
-  private targetRotation = 0;
 
   constructor(card: CardInstance, width: number, height: number) {
     super();
@@ -76,24 +73,22 @@ export class CardSprite extends PIXI.Container {
   }
 
   setDragging(value: boolean) {
-    this._dragging = value;
+  this._dragging = value;
     if (value) {
       this.isHovered = false;
       this.clearGlow();
-      this.targetScaleX = 1;
-      this.targetScaleY = 1;
-      this._animating = true;
+      this.animator?.dragStart();
       getSharedTooltip().hide();
     }
   }
 
   private onHoverIn = () => {
-    if (this._dragging) return;
+  if (this._dragging) return;
     this.isHovered = true;
     this.baseY = this.y;
     this.baseRotation = this.rotation;
     this.drawGlow();
-    this.computeTarget();
+    this.animator?.hoverEnter();
 
     const tooltip = getSharedTooltip();
     const globalPos = this.getGlobalPosition();
@@ -104,7 +99,7 @@ export class CardSprite extends PIXI.Container {
     if (this._dragging) return;
     this.isHovered = false;
     this.clearGlow();
-    this.computeTarget();
+    this.animator?.hoverLeave();
 
     getSharedTooltip().hide();
   };
@@ -136,38 +131,41 @@ export class CardSprite extends PIXI.Container {
     this.protectOverlay.clear();
   }
 
-  private computeTarget() {
-    this.targetScaleX = this.isHovered ? HOVER_SCALE : 1;
-    this.targetScaleY = this.isHovered ? HOVER_SCALE : 1;
-    this.targetY = this.isHovered ? this.baseY + HOVER_LIFT : this.baseY;
-    this.targetRotation = this.isHovered ? 0 : this.baseRotation;
-    this._animating = true;
-  }
+  // private computeTarget() {
+  //   this.targetScaleX = this.isHovered ? HOVER_SCALE : 1;
+  //   this.targetScaleY = this.isHovered ? HOVER_SCALE : 1;
+  //   this.targetY = this.isHovered ? this.baseY + HOVER_LIFT : this.baseY;
+  //   this.targetRotation = this.isHovered ? 0 : this.baseRotation;
+  //   this._animating = true;
+  // }
 
-  tick(dt: number) {
-    if (!this._animating) return;
+  // tick(dt: number) {
+  //   if (!this._animating) return;
 
-    const speed = 0.15 * dt;
-    this.scale.x += (this.targetScaleX - this.scale.x) * speed;
-    this.scale.y += (this.targetScaleY - this.scale.y) * speed;
-    this.y += (this.targetY - this.y) * speed;
-    this.rotation += (this.targetRotation - this.rotation) * speed;
+  //   const speed = 0.15 * dt;
+  //   this.scale.x += (this.targetScaleX - this.scale.x) * speed;
+  //   this.scale.y += (this.targetScaleY - this.scale.y) * speed;
+  //   this.y += (this.targetY - this.y) * speed;
+  //   this.rotation += (this.targetRotation - this.rotation) * speed;
 
-    const scaleDone = Math.abs(this.scale.x - this.targetScaleX) < 0.005;
-    const yDone = Math.abs(this.y - this.targetY) < 0.5;
-    const rotationDone = Math.abs(this.rotation - this.targetRotation) < 0.001;
+  //   const scaleDone = Math.abs(this.scale.x - this.targetScaleX) < 0.005;
+  //   const yDone = Math.abs(this.y - this.targetY) < 0.5;
+  //   const rotationDone = Math.abs(this.rotation - this.targetRotation) < 0.001;
 
-    if (scaleDone && yDone && rotationDone) {
-      this.scale.x = this.targetScaleX;
-      this.scale.y = this.targetScaleY;
-      this.y = this.targetY;
-      this.rotation = this.targetRotation;
-      this._animating = false;
-    }
-  }
+  //   if (scaleDone && yDone && rotationDone) {
+  //     this.scale.x = this.targetScaleX;
+  //     this.scale.y = this.targetScaleY;
+  //     this.y = this.targetY;
+  //     this.rotation = this.targetRotation;
+  //     this._animating = false;
+  //   }
+  // }
 
   setBaseY(y: number) {
     this.baseY = y;
+    if (!this.animator) {
+      this.animator = new CardAnimator(this, y);
+    }
   }
 
   getBaseY(): number {
@@ -176,16 +174,15 @@ export class CardSprite extends PIXI.Container {
 
   startDrag() {
     this.setDragging(true);
-    this.alpha = 0.9;
-    this.zIndex = 1000;
-    this.targetRotation = 0;
-    this._animating = true;
   }
 
   endDrag() {
-    this.alpha = 1;
-    this.zIndex = 0;
+    this.animator?.dragEnd();
     this._dragging = false;
+  }
+
+  destroy() {
+    this.animator?.destroy();
   }
 
   private async build(width: number, height: number) {

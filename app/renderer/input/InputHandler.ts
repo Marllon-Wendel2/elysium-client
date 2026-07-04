@@ -10,6 +10,7 @@ import { ActionMenu, ActionMenuItem } from '@/app/components/Pixi/Sprites/Action
 
 export class InputHandler {
   onCardDrop?: (action: PlayCardAction) => void;
+  onCardDropped?: (card: CardInstance) => void;
   onActionPerformed?: (actionId: string, slot: BoardSlot, card: CardInstance) => void;
 
   private boardManager: BoardManager;
@@ -153,6 +154,7 @@ export class InputHandler {
 
       console.log('🃏 Play card action:', action);
       this.onCardDrop?.(action);
+      this.onCardDropped?.(t.card);
 
       this.handManager.removeSprite(t);
       t.destroy();

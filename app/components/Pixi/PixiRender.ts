@@ -10,6 +10,7 @@ import { InputHandler } from '../../renderer/input/InputHandler';
 import { ActionMenu } from './Sprites/ActionMenu';
 import { PendingActionsScroll } from './Sprites/PendingActionsScroll';
 import { getSharedTooltip } from './Sprites/CardTooltip';
+import { animations } from '../../renderer/animations/AnimationEngine';
 
 export interface PlayCardAction {
   type: 'DOWN_CARD';
@@ -78,6 +79,13 @@ export class GameRenderer {
     this.inputHandler.onCardDrop = (action) => {
       this.onPlayCard?.(action);
     };
+    this.inputHandler.onCardDropped = (card) => {
+      const store = useGameStore.getState();
+      const newHand = store.player.hand.filter((c) => c.instanceId !== card.instanceId);
+      useGameStore.setState({
+        player: { ...store.player, hand: newHand },
+      });
+    };
     this.onActionPerformed = onActionPerformed;
 
     this.inputHandler.onActionPerformed = (actionId, slot, card) => {
@@ -140,7 +148,7 @@ export class GameRenderer {
 
   private tick = (ticker: PIXI.Ticker) => {
     const dt = ticker.deltaTime;
-    this.handManager.tick(dt);
+    animations.update(dt);
     this.inputHandler.updateHighlight();
     this.pendingScroll.tick(dt);
   };

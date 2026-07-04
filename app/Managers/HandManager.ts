@@ -40,6 +40,9 @@ export class HandManager {
   }
 
   rebuild(hand: CardInstance[], screenWidth: number, screenHeight: number) {
+    for (const sprite of this.cardSprites) {
+      sprite.destroy();
+    }
     this.clear();
     this.screenWidth = screenWidth;
     this.screenHeight = screenHeight;
@@ -73,12 +76,6 @@ export class HandManager {
     }
 
     this.rebuild(hand, screenWidth, screenHeight);
-  }
-
-  tick(dt: number) {
-    for (const sprite of this.cardSprites) {
-      sprite.tick(dt);
-    }
   }
 
   removeSprite(sprite: CardSprite) {
@@ -120,6 +117,8 @@ export class HandManager {
     const maxRotationRad = (MAX_ROTATION_DEG * Math.PI) / 180;
 
     this.cardSprites.forEach((sprite, index) => {
+      if (sprite.isHovered) return;
+
       sprite.x = startX + index * (BASE_CARD_WIDTH - overlap);
 
       let rotation = 0;
