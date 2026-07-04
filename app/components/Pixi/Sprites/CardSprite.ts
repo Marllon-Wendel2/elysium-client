@@ -1,5 +1,6 @@
 import * as PIXI from 'pixi.js';
 import type { CardInstance } from '@/app/types/cardInstance';
+import { getSharedTooltip } from './CardTooltip';
 
 const CLASS_BORDER_COLORS: Record<string, number> = {
   citizen: 0x60a5fa,
@@ -8,6 +9,13 @@ const CLASS_BORDER_COLORS: Record<string, number> = {
   noble: 0xfacc15,
   spell: 0x22d3ee,
   equipment: 0xf59e0b,
+};
+
+const RARITY_FRAME_MAP: Record<string, string> = {
+  common: '/Board/comum.png',
+  rare: '/Board/medio.png',
+  epic: '/Board/raro.png',
+  legendary: '/Board/realeza.png',
 };
 
 const HOVER_SCALE = 1.15;
@@ -19,6 +27,7 @@ const PROTECT_COLOR = 0xfacc15;
 export class CardSprite extends PIXI.Container {
   card: CardInstance;
   private artSprite: PIXI.Sprite | null = null;
+  private frameSprite: PIXI.Sprite | null = null;
   private bg: PIXI.Graphics;
   private statsContainer: PIXI.Container;
   private glowGraphics: PIXI.Graphics;
@@ -74,6 +83,7 @@ export class CardSprite extends PIXI.Container {
       this.targetScaleX = 1;
       this.targetScaleY = 1;
       this._animating = true;
+      getSharedTooltip().hide();
     }
   }
 
@@ -84,6 +94,10 @@ export class CardSprite extends PIXI.Container {
     this.baseRotation = this.rotation;
     this.drawGlow();
     this.computeTarget();
+
+    const tooltip = getSharedTooltip();
+    const globalPos = this.getGlobalPosition();
+    tooltip.show(this.card, globalPos.x + this.cardWidth / 2, globalPos.y);
   };
 
   private onHoverOut = () => {
@@ -91,6 +105,8 @@ export class CardSprite extends PIXI.Container {
     this.isHovered = false;
     this.clearGlow();
     this.computeTarget();
+
+    getSharedTooltip().hide();
   };
 
   private drawGlow() {
@@ -194,6 +210,19 @@ export class CardSprite extends PIXI.Container {
         this.addChildAt(this.artSprite, 0);
       } catch {
         // arte indisponivel, mantem fundo escuro
+      }
+    }
+
+    const frameUrl = RARITY_FRAME_MAP[this.card.base.rarity];
+    if (frameUrl) {
+      try {
+        const frameTexture = await PIXI.Assets.load(frameUrl);
+        this.frameSprite = new PIXI.Sprite(frameTexture);
+        this.frameSprite.width = width;
+        this.frameSprite.height = height;
+        this.addChild(this.frameSprite);
+      } catch {
+        // moldura indisponivel, ignora
       }
     }
 

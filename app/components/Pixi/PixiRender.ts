@@ -9,6 +9,7 @@ import { OpponentHandManager } from '../../Managers/OpponentHandManager';
 import { InputHandler } from '../../renderer/input/InputHandler';
 import { ActionMenu } from './Sprites/ActionMenu';
 import { PendingActionsScroll } from './Sprites/PendingActionsScroll';
+import { getSharedTooltip } from './Sprites/CardTooltip';
 
 export interface PlayCardAction {
   type: 'DOWN_CARD';
@@ -124,6 +125,9 @@ export class GameRenderer {
     this.hudLayer.addChild(this.pendingScroll.container);
     this.hudLayer.addChild(this.pendingScroll.passContainer);
 
+    const tooltip = getSharedTooltip();
+    this.hudLayer.addChild(tooltip);
+
     await this.createBackground();
     await this.pendingScroll.init();
 
@@ -146,6 +150,9 @@ export class GameRenderer {
     if (width === 0 || height === 0) return;
 
     this.app.renderer.resize(width, height);
+
+    const tooltip = getSharedTooltip();
+    tooltip.setScreenSize(width, height);
 
     if (this.topVideo && this.bottomVideo) {
       const halfH = height / 2;
