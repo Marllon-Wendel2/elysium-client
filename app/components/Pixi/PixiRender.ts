@@ -176,7 +176,7 @@ export class GameRenderer {
 
   private async createBackground() {
     const video = document.createElement('video');
-    video.src = '/Boards/BoardAnimation.mp4';
+    video.src = '/Background/BoardAnimation.mp4';
     video.autoplay = true;
     video.loop = true;
     video.muted = true;

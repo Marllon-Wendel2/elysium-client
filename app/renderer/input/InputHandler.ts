@@ -225,7 +225,7 @@ export class InputHandler {
     if (!card.state.hasAttacked) {
       actions.push({
         id: 'attack',
-        iconUrl: '/Icons/atackkIcon.jpg',
+        iconUrl: '/Icons/atackkIcon2.png',
         label: 'Atacar',
         enabled: true,
       });
@@ -235,7 +235,7 @@ export class InputHandler {
     if (this.canMove(card)) {
       actions.push({
         id: 'move',
-        iconUrl: '/Icons/moveIcon.jpg',
+        iconUrl: '/Icons/moveIcon2.png',
         label: 'Mover',
         enabled: true,
       });

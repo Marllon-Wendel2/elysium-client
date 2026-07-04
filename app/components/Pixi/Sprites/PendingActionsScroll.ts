@@ -248,7 +248,7 @@ export class PendingActionsScroll {
     });
 
     this.container.visible = false;
-    this.drawConfirmButton(false);
+    // this.drawConfirmButton(false);
   }
 
   async init() {
@@ -507,7 +507,7 @@ export class PendingActionsScroll {
       const badgeBg = new PIXI.Graphics();
       badgeBg.circle(0, 0, 10).fill({ color: 0x059669, alpha: 0.9 });
       this.countBadge.parent?.addChildAt(badgeBg, 0);
-      const oldBg = this.container.children.find((c, i) => i > 2 && c !== this.contentContainer && c !== this.maskGraphics && c !== this.parchmentSprite && (c as PIXI.Graphics)._fillStyle?.color === 0x059669);
+      const oldBg = this.container.children.find((c, i) => i > 2 && c !== this.contentContainer && c !== this.maskGraphics && c !== this.parchmentSprite && (c as PIXI.Graphics).fillStyle?.color === 0x059669);
       if (oldBg) oldBg.destroy();
     }
   }
@@ -521,7 +521,7 @@ export class PendingActionsScroll {
     this.passBtn.eventMode = hasActions ? 'none' : 'static';
     this.passBtn.cursor = hasActions ? 'default' : 'pointer';
   }
-
+  
   private drawConfirmButton(hasActions: boolean, hover: boolean) {
     this.confirmBtnBg.clear();
     const color = hasActions
